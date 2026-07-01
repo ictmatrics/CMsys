@@ -163,7 +163,7 @@ class Autoload
  * Auto-instantiate Autoload with global helpers/libraries/filters
  * ---------------------------------------------------------------
  */
-$helpers   = ['format_helper', 'flash_helper', 'url_helper'];
+$helpers   = ['format_helper', 'flash_helper', 'url_helper', 'hook_helper', 'db_helper'];
 $libraries = [''];
 $filters   = [''];
 
