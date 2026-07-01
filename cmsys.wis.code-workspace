@@ -1,0 +1,14 @@
+{
+  "folders": [
+   
+    {
+      "name": ".agents",
+      "path": ".agents",
+    },
+    {
+      "name": "cmsys.wis",
+      "path": ".",
+    }    
+  ],
+  "settings": {},
+}
