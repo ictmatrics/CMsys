@@ -25,7 +25,7 @@
                             <td>{{ $page['id'] }}</td>
                             <td>
                                 <strong class="d-block">{{ htmlspecialchars($page['title'], ENT_QUOTES, 'UTF-8') }}</strong>
-                                <small class="text-muted font-monospace">/page/{{ $page['slug'] }}</small>
+                                <small class="text-muted font-monospace">/{{ $page['slug'] }}</small>
                             </td>
                             <td>
                                 <select class="form-select form-select-sm status-toggle" data-id="{{ $page['id'] }}" data-action="post_status" style="width: 120px;">

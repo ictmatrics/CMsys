@@ -23,12 +23,11 @@ $router->post('/login', 'AuthController@doLogin');
 $router->get('/logout', 'AuthController@logout');
 
 // Dynamic Content Display Routes
-$router->get('/post/{slug}', 'FrontendController@post');
-$router->get('/page/{slug}', 'FrontendController@page');
 $router->get('/category/{slug}', 'FrontendController@category');
 $router->get('/tag/{slug}', 'FrontendController@tag');
 $router->post('/comment/add', 'FrontendController@addComment');
 $router->get('/cpt/{type}/{slug}', 'FrontendController@cptEntry');
+$router->get('/{slug}', 'FrontendController@detail');
 
 // Administration Control Panel Routes
 $router->get('/admin', 'AdminController@index');

@@ -69,7 +69,7 @@
                     </thead>
                     <tbody>
                         <?php foreach ($themes as $theme) { ?>
-                            <tr>
+                            <tr class="{{ $backend_theme === 'dark_admin' ? 'bg-dark' : 'bg-light' }}">
                                 <td class="ps-4">
                                     <div class="theme-preview-box rounded border bg-light shadow-sm d-flex align-items-center justify-content-center text-muted" style="width: 90px; height: 55px; transition: all 0.3s ease;">
                                         <i class="fa-solid fa-palette fa-2x text-primary opacity-50"></i>
@@ -92,7 +92,7 @@
                                         <a href="{{ pathto('admin/theme/customize/' . $theme['name']) }}" class="btn btn-sm btn-outline-primary rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;" title="Customize Theme">
                                             <i class="fa-solid fa-sliders"></i>
                                         </a>
-                                        
+
                                         <?php if ($theme['is_active'] === 1) { ?>
                                             <button class="btn btn-sm btn-success border-0 px-4 py-1-5 rounded-pill shadow-sm fw-bold fs-7" disabled>
                                                 <i class="fa-solid fa-circle-check me-1"></i>Activated
@@ -102,7 +102,7 @@
                                                 <span class="status-text text-muted"><i class="fa-solid fa-circle-xmark me-1 text-muted"></i>Inactive</span>
                                                 <span class="hover-text text-white"><i class="fa-solid fa-power-off me-1"></i>Activate</span>
                                             </button>
-                                            
+
                                             <?php if ($theme['name'] !== 'classic' && $theme['name'] !== 'admin') { ?>
                                                 <form action="{{ pathto('admin/theme/delete') }}" method="POST" class="m-0" onsubmit="return confirm('Are you sure you want to delete this theme?');">
                                                     <input type="hidden" name="name" value="{{ $theme['name'] }}">
@@ -126,11 +126,11 @@
     .bg-secondary-soft {
         background-color: rgba(108, 117, 125, 0.1) !important;
     }
-    
+
     .fs-7 {
         font-size: 0.8rem !important;
     }
-    
+
     .py-1-5 {
         padding-top: 0.35rem !important;
         padding-bottom: 0.35rem !important;
@@ -143,22 +143,22 @@
         min-width: 110px;
         transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    
+
     .btn-inactive-status .hover-text {
         display: none;
     }
-    
+
     .btn-inactive-status:hover {
         background-color: #0d6efd !important;
         border-color: #0d6efd !important;
         color: #ffffff !important;
         box-shadow: 0 4px 6px -1px rgba(13, 110, 253, 0.4);
     }
-    
+
     .btn-inactive-status:hover .status-text {
         display: none;
     }
-    
+
     .btn-inactive-status:hover .hover-text {
         display: inline-block;
     }

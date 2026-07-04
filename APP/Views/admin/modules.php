@@ -59,6 +59,7 @@
                                         </td>
                                         <td class="text-end pe-4">
                                             <div class="d-flex justify-content-end align-items-center">
+                                                <?php do_action('admin_module_actions', $mod); ?>
                                                 <a href="{{ pathto('admin/module/toggle/' . $mod['name']) }}" class="btn btn-sm btn-<?= $mod['is_active'] === 1 ? 'outline-secondary' : 'success' ?> me-2">
                                                     <?= $mod['is_active'] === 1 ? 'Deactivate' : 'Activate' ?>
                                                 </a>

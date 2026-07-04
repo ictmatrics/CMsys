@@ -21,7 +21,7 @@
                     <?php } else { ?>
                         <?php foreach ($widget_recent_posts as $post) { ?>
                             <li class="mb-3">
-                                <a href="{{ pathto('post/' . $post['slug']) }}" class="text-decoration-none font-weight-bold d-block text-dark small">{{ htmlspecialchars($post['title'], ENT_QUOTES, 'UTF-8') }}</a>
+                                <a href="{{ pathto($post['slug']) }}" class="text-decoration-none font-weight-bold d-block text-dark small">{{ htmlspecialchars($post['title'], ENT_QUOTES, 'UTF-8') }}</a>
                                 <small class="text-muted" style="font-size:11px;">{{ date('M d, Y', strtotime($post['created_at'])) }}</small>
                             </li>
                         <?php } ?>
@@ -68,7 +68,7 @@
                     <?php } else { ?>
                         <?php foreach ($widget_pages as $page) { ?>
                             <li class="mb-2">
-                                <a href="{{ pathto('page/' . $page['slug']) }}" class="text-decoration-none small text-dark"><i class="fa-solid fa-circle-chevron-right me-2 text-success"></i> {{ htmlspecialchars($page['title'], ENT_QUOTES, 'UTF-8') }}</a>
+                                <a href="{{ pathto($page['slug']) }}" class="text-decoration-none small text-dark"><i class="fa-solid fa-circle-chevron-right me-2 text-success"></i> {{ htmlspecialchars($page['title'], ENT_QUOTES, 'UTF-8') }}</a>
                             </li>
                         <?php } ?>
                     <?php } ?>

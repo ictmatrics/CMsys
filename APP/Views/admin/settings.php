@@ -159,7 +159,7 @@ $time_formats = [
                                             </div>
                                             <div class="flex-grow-1">
                                                 <div class="input-group">
-                                                    <input type="text" name="site_logo" id="site_logo" class="form-control bg-white font-monospace" placeholder="Choose a logo file" value="{{ htmlspecialchars($logo ?? '', ENT_QUOTES, 'UTF-8') }}" readonly>
+                                                    <input type="text" name="site_logo" id="site_logo" class="form-control bg-white font-monospace" placeholder="Choose a logo file" value="{{ htmlspecialchars($logo ?? '', ENT_QUOTES, 'UTF-8') }}">
                                                     <button class="btn btn-primary btn-select-media" type="button" data-target="site_logo"><i class="fa-solid fa-images me-1"></i> Select</button>
                                                     <button class="btn btn-danger btn-clear-media" type="button" data-target="site_logo"><i class="fa-solid fa-trash me-1"></i> Clear</button>
                                                 </div>
@@ -178,7 +178,7 @@ $time_formats = [
                                             </div>
                                             <div class="flex-grow-1">
                                                 <div class="input-group">
-                                                    <input type="text" name="site_favicon" id="site_favicon" class="form-control bg-white font-monospace" placeholder="Choose a favicon file" value="{{ htmlspecialchars($favicon ?? '', ENT_QUOTES, 'UTF-8') }}" readonly>
+                                                    <input type="text" name="site_favicon" id="site_favicon" class="form-control bg-white font-monospace" placeholder="Choose a favicon file" value="{{ htmlspecialchars($favicon ?? '', ENT_QUOTES, 'UTF-8') }}">
                                                     <button class="btn btn-primary btn-select-media" type="button" data-target="site_favicon"><i class="fa-solid fa-images me-1"></i> Select</button>
                                                     <button class="btn btn-danger btn-clear-media" type="button" data-target="site_favicon"><i class="fa-solid fa-trash me-1"></i> Clear</button>
                                                 </div>
@@ -197,7 +197,7 @@ $time_formats = [
                                             </div>
                                             <div class="flex-grow-1">
                                                 <div class="input-group">
-                                                    <input type="text" name="site_loader" id="site_loader" class="form-control bg-white font-monospace" placeholder="Choose a loader file" value="{{ htmlspecialchars($loader ?? '', ENT_QUOTES, 'UTF-8') }}" readonly>
+                                                    <input type="text" name="site_loader" id="site_loader" class="form-control bg-white font-monospace" placeholder="Choose a loader file" value="{{ htmlspecialchars($loader ?? '', ENT_QUOTES, 'UTF-8') }}">
                                                     <button class="btn btn-primary btn-select-media" type="button" data-target="site_loader"><i class="fa-solid fa-images me-1"></i> Select</button>
                                                     <button class="btn btn-danger btn-clear-media" type="button" data-target="site_loader"><i class="fa-solid fa-trash me-1"></i> Clear</button>
                                                 </div>
@@ -247,7 +247,7 @@ $time_formats = [
                                                     <select name="page_on_front" id="page_on_front" class="form-select">
                                                         <option value="0">-- Select Page --</option>
                                                         <?php foreach ($pages as $p) { ?>
-                                                            <option value="{{ $p->id }}" {{ (string)$page_on_front === (string)$p->id ? 'selected' : '' }}>{{ htmlspecialchars($p->title, ENT_QUOTES, 'UTF-8') }}</option>
+                                                            <option value="{{ $p['id'] }}" {{ (string)$page_on_front === (string)$p['id'] ? 'selected' : '' }}>{{ htmlspecialchars($p['title'], ENT_QUOTES, 'UTF-8') }}</option>
                                                         <?php } ?>
                                                     </select>
                                                 </div>
@@ -261,7 +261,7 @@ $time_formats = [
                                                     <select name="page_for_posts" id="page_for_posts" class="form-select">
                                                         <option value="0">-- Select Page --</option>
                                                         <?php foreach ($pages as $p) { ?>
-                                                            <option value="{{ $p->id }}" {{ (string)$page_for_posts === (string)$p->id ? 'selected' : '' }}>{{ htmlspecialchars($p->title, ENT_QUOTES, 'UTF-8') }}</option>
+                                                            <option value="{{ $p['id'] }}" {{ (string)$page_for_posts === (string)$p['id'] ? 'selected' : '' }}>{{ htmlspecialchars($p['title'], ENT_QUOTES, 'UTF-8') }}</option>
                                                         <?php } ?>
                                                     </select>
                                                 </div>
@@ -341,22 +341,7 @@ $time_formats = [
     </div>
 </div>
 
-<!-- Media Selection Modal -->
-<div class="modal fade" id="mediaSelectModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content shadow-lg border-0 rounded-4">
-            <div class="modal-header bg-light border-bottom-0 pb-0">
-                <h5 class="modal-title font-weight-bold text-dark"><i class="fa-solid fa-images text-primary me-2"></i> Select Asset from Media Library</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-4" style="max-height: 500px; overflow-y: auto;">
-                <div class="row row-cols-2 row-cols-md-4 g-3" id="modalMediaList">
-                    <!-- Loaded dynamically via AJAX -->
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
@@ -395,145 +380,21 @@ document.addEventListener("DOMContentLoaded", function() {
             originalInputValueFormat: valuesArr => valuesArr.map(item => item.value).join(',')
         });
     }
-
-    // 3. ─── Media Library Modal (robust, freeze-free) ─────────────────────────
-    //  • Destroys any stale Bootstrap instance before opening so backdrop never locks.
-    //  • Uses 'hidden.bs.modal' to know when it is safe to re-show.
-    //  • Card click writes value/preview then hides modal properly via getInstance().
-    // ──────────────────────────────────────────────────────────────────────────
-
-    const mediaModalEl = document.getElementById('mediaSelectModal');
-    let _mediaTarget    = '';   // id of the input to populate
-    let _mediaFetched   = false; // cache flag; reset when modal fully hides
-    let _modalBusy      = false; // prevent double-open during animation
-
-    /**
-     * Safely open the media modal, fetching assets via AJAX.
-     * @param {string} targetFieldId
-     */
-    function openMediaModal(targetFieldId) {
-        if (_modalBusy) return;
-        _mediaTarget = targetFieldId;
-
-        // 1. Destroy any leftover Bootstrap instance to prevent backdrop stacking
-        const staleInstance = bootstrap.Modal.getInstance(mediaModalEl);
-        if (staleInstance) {
-            staleInstance.dispose();
-        }
-
-        // 2. Remove any lingering backdrop that Bootstrap may have left behind
-        document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
-        document.body.classList.remove('modal-open');
-        document.body.style.overflow   = '';
-        document.body.style.paddingRight = '';
-
-        // 3. Create a fresh instance
-        const modalInstance = new bootstrap.Modal(mediaModalEl, {
-            backdrop: true,
-            keyboard: true
-        });
-
-        // 4. Show spinner while loading
-        $('#modalMediaList').html(
-            '<div class="col-12 text-center py-5">' +
-            '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading…</span></div>' +
-            '<p class="text-muted mt-2 small">Loading media assets…</p>' +
-            '</div>'
-        );
-
-        _modalBusy = true;
-        modalInstance.show();
-
-        // 5. Fetch media list
-        $.ajax({
-            url: "{{ pathto('admin/media') }}",
-            type: 'GET',
-            dataType: 'json',
-            headers: { 'X-Requested-With': 'XMLHttpRequest' },
-            success: function(data) {
-                $('#modalMediaList').empty();
-
-                const images = (data || []).filter(item => item.mime_type && item.mime_type.startsWith('image/'));
-
-                if (images.length === 0) {
-                    $('#modalMediaList').html(
-                        '<div class="col-12 text-center text-muted py-4">' +
-                        '<i class="fa-solid fa-image fa-2x mb-2 d-block opacity-50"></i>' +
-                        'No image files found in your Media Library. Upload some first.' +
-                        '</div>'
-                    );
-                    return;
-                }
-
-                images.forEach(function(item) {
-                    const safeName = $('<span>').text(item.original_name).html();
-                    const $card = $(
-                        '<div class="col text-center">' +
-                            '<div class="card h-100 shadow-sm border select-media-card rounded-3 overflow-hidden"' +
-                                ' data-path="' + item.path + '" style="cursor:pointer;" role="button" tabindex="0">' +
-                                '<img src="' + item.path + '" class="card-img-top p-1" style="height:100px;object-fit:contain;" loading="lazy">' +
-                                '<div class="card-footer p-1 bg-light">' +
-                                    '<span class="text-truncate d-block small px-1">' + safeName + '</span>' +
-                                '</div>' +
-                            '</div>' +
-                        '</div>'
-                    );
-                    $('#modalMediaList').append($card);
-                });
-            },
-            error: function(xhr, status, err) {
-                $('#modalMediaList').html(
-                    '<div class="col-12 text-center text-danger py-4">' +
-                    '<i class="fa-solid fa-circle-exclamation fa-2x mb-2 d-block"></i>' +
-                    'Failed to load media assets. Please try again.' +
-                    '</div>'
-                );
-                flash('Failed to fetch media assets: ' + (err || status), 'danger');
+    // Live preview on input change for Site Identity settings
+    ['site_logo', 'site_favicon', 'site_loader'].forEach(function(id) {
+        $('#' + id).on('input change', function() {
+            const val = $(this).val();
+            if (val) {
+                const fullPath = val.startsWith('http') || val.startsWith('/') ? val : "{{ pathto('') }}" + val;
+                $('#' + id + '_preview').attr('src', fullPath).show();
+                $('#' + id + '_placeholder').hide();
+            } else {
+                $('#' + id + '_preview').hide();
+                $('#' + id + '_placeholder').show();
             }
         });
-    }
-
-    // Release busy lock when modal fully hides
-    mediaModalEl.addEventListener('hidden.bs.modal', function() {
-        _modalBusy = false;
     });
 
-    // Open modal on "Select" button click
-    $(document).on('click', '.btn-select-media', function() {
-        openMediaModal($(this).attr('data-target'));
-    });
-
-    // ── Card selection inside modal ────────────────────────────────────────────
-    $(document).on('click', '.select-media-card', function() {
-        const fullPath = $(this).attr('data-path');
-        if (!fullPath || !_mediaTarget) return;
-
-        // Strip BASE_URL prefix to store only the relative path
-        const baseUrl = "{{ pathto('') }}";
-        const cleanedPath = fullPath.startsWith(baseUrl)
-            ? fullPath.slice(baseUrl.length).replace(/^\/+/, '')
-            : fullPath;
-
-        // Populate the target input and preview
-        $('#' + _mediaTarget).val(cleanedPath);
-        $('#' + _mediaTarget + '_preview').attr('src', fullPath).show();
-        $('#' + _mediaTarget + '_placeholder').hide();
-
-        // Safely close using getInstance (the instance must exist at this point)
-        const instance = bootstrap.Modal.getInstance(mediaModalEl);
-        if (instance) {
-            instance.hide();
-        }
-    });
-
-    // ── Clear button ───────────────────────────────────────────────────────────
-    $(document).on('click', '.btn-clear-media', function() {
-        const target = $(this).attr('data-target');
-        if (!target) return;
-        $('#' + target).val('');
-        $('#' + target + '_preview').attr('src', '').hide();
-        $('#' + target + '_placeholder').show();
-    });
 
     // 4. AJAX Save Form Submit Handler
     $('#settingsForm').on('submit', function(e) {

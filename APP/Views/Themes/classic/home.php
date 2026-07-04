@@ -58,7 +58,7 @@
                     ?>
                     <article class="card card-post overflow-hidden">
                         <?php if ($img) { ?>
-                            <a href="{{ pathto('post/' . $post['slug']) }}" class="d-block overflow-hidden" style="height: 250px;">
+                            <a href="{{ pathto($post['slug']) }}" class="d-block overflow-hidden" style="height: 250px;">
                                 <img src="{{ $img }}" class="w-100 h-100" style="object-fit: cover; transition: transform 0.5s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                             </a>
                         <?php } ?>
@@ -69,12 +69,12 @@
                                 <span><i class="fa-regular fa-clock me-2"></i>{{ $readingTime }} min read</span>
                             </div>
                             <h2 class="card-title h3 mb-3">
-                                <a href="{{ pathto('post/' . $post['slug']) }}" class="text-dark text-decoration-none font-weight-bold">{{ htmlspecialchars($post['title'], ENT_QUOTES, 'UTF-8') }}</a>
+                                <a href="{{ pathto($post['slug']) }}" class="text-dark text-decoration-none font-weight-bold">{{ htmlspecialchars($post['title'], ENT_QUOTES, 'UTF-8') }}</a>
                             </h2>
                             <p class="card-text text-secondary mb-4" style="line-height: 1.7; font-size: 1.05rem;">
                                 {{ substr(strip_tags($post['content']), 0, 180) }}...
                             </p>
-                            <a href="{{ pathto('post/' . $post['slug']) }}" class="btn btn-outline-primary rounded-pill px-4 py-2 fw-semibold">Read Article <i class="fa-solid fa-arrow-right ms-2"></i></a>
+                            <a href="{{ pathto($post['slug']) }}" class="btn btn-outline-primary rounded-pill px-4 py-2 fw-semibold">Read Article <i class="fa-solid fa-arrow-right ms-2"></i></a>
                         </div>
                     </article>
                 <?php } ?>

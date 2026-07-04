@@ -157,6 +157,7 @@
                             <?php } else { ?>
                                 <?php foreach ($menu_items as $item) { ?>
                                     <div class="list-group-item list-group-item-action d-flex align-items-center justify-content-between py-3 mb-2 rounded border item-node" 
+                                         draggable="true"
                                          data-title="{{ htmlspecialchars($item['title'], ENT_QUOTES, 'UTF-8') }}" 
                                          data-type="{{ $item['type'] }}" 
                                          data-url="{{ htmlspecialchars($item['url'] ?? '', ENT_QUOTES, 'UTF-8') }}" 
@@ -192,9 +193,47 @@
     </div>
 <?php } ?>
 
+<style>
+.item-node.dragging {
+    opacity: 0.5;
+    background-color: #f8fafc;
+    border: 2px dashed #3b82f6 !important;
+}
+</style>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         let tempCounter = 1000;
+
+        let dragEl = null;
+
+        // Native drag & drop event handlers using event delegation
+        $('#menu-items-list').on('dragstart', '.item-node', function(e) {
+            dragEl = this;
+            e.originalEvent.dataTransfer.effectAllowed = 'move';
+            e.originalEvent.dataTransfer.setData('text/html', this.innerHTML);
+            $(this).addClass('dragging');
+        });
+
+        $('#menu-items-list').on('dragover', '.item-node', function(e) {
+            e.preventDefault();
+            e.originalEvent.dataTransfer.dropEffect = 'move';
+            
+            const target = this;
+            if (target !== dragEl) {
+                const rect = target.getBoundingClientRect();
+                const next = (e.originalEvent.clientY - rect.top) / (rect.bottom - rect.top) > 0.5;
+                if (next) {
+                    target.parentNode.insertBefore(dragEl, target.nextSibling);
+                } else {
+                    target.parentNode.insertBefore(dragEl, target);
+                }
+            }
+        });
+
+        $('#menu-items-list').on('dragend', '.item-node', function(e) {
+            $(this).removeClass('dragging');
+            dragEl = null;
+        });
 
         function checkPlaceholder() {
             if ($('#menu-items-list .item-node').length === 0) {
@@ -224,6 +263,7 @@
             tempCounter++;
             const item = $(`
                 <div class="list-group-item list-group-item-action d-flex align-items-center justify-content-between py-3 mb-2 rounded border item-node" 
+                     draggable="true"
                      data-title="${title}" 
                      data-type="custom" 
                      data-url="${url}" 
@@ -260,6 +300,7 @@
 
                 const item = $(`
                     <div class="list-group-item list-group-item-action d-flex align-items-center justify-content-between py-3 mb-2 rounded border item-node" 
+                         draggable="true"
                          data-title="${title}" 
                          data-type="page" 
                          data-url="" 
@@ -296,6 +337,7 @@
 
                 const item = $(`
                     <div class="list-group-item list-group-item-action d-flex align-items-center justify-content-between py-3 mb-2 rounded border item-node" 
+                         draggable="true"
                          data-title="${title}" 
                          data-type="category" 
                          data-url="" 
@@ -324,6 +366,27 @@
         $(document).on('click', '.btn-remove-item', function() {
             $(this).closest('.item-node').remove();
             checkPlaceholder();
+        });
+
+        // Change Menu Location event handler to reload and display menu assigned to selected location
+        $('#menu_location_select').on('change', function() {
+            const selectedLocation = $(this).val();
+            if (!selectedLocation) {
+                return;
+            }
+            
+            const menus = <?php echo json_encode($menus); ?>;
+            let targetMenuId = null;
+            for (let i = 0; i < menus.length; i++) {
+                if (menus[i].location === selectedLocation) {
+                    targetMenuId = menus[i].id;
+                    break;
+                }
+            }
+            
+            if (targetMenuId && parseInt(targetMenuId) !== parseInt("{{ $active_menu_id }}")) {
+                window.location.href = "{{ pathto('admin/menus') }}?menu=" + targetMenuId;
+            }
         });
 
         // Submit Menu Structure Form

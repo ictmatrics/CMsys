@@ -139,13 +139,44 @@
             });
         }
 
-        // Copy URL handler
+        // Copy URL handler (with HTTP/Non-secure context fallback)
         $(document).on('click', '.btn-copy-url', function() {
-            const url = $(this).data('url');
-            navigator.clipboard.writeText(url).then(() => {
-                flash('URL copied to clipboard!', 'info', 1500);
-            });
+            const url = $(this).attr('data-url');
+            if (!url) return;
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(url).then(() => {
+                    flash('URL copied to clipboard!', 'info');
+                }).catch(() => {
+                    fallbackCopyText(url);
+                });
+            } else {
+                fallbackCopyText(url);
+            }
         });
+
+        function fallbackCopyText(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.opacity = "0";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    flash('URL copied to clipboard!',  'info');
+                } else {
+                    flash('Failed to copy URL', 'warning');
+                }
+            } catch (err) {
+                flash('Failed to copy URL', 'danger');
+            }
+            document.body.removeChild(textArea);
+        }
     });
 </script>
 

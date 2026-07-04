@@ -32,6 +32,11 @@ $is_sticky = !empty($theme_config['sticky_header']) ? 'sticky-top' : '';
     <title>{{ $title }}{{ $title ? ' | ' : '' }}{{ $site_title }}</title>
     <meta name="description" content="{{ htmlspecialchars($site_description, ENT_QUOTES, 'UTF-8') }}">
     
+    <?php if (!empty($site_favicon)) { ?>
+        <link rel="icon" href="{{ pathto($site_favicon) }}" type="image/x-icon">
+        <link rel="shortcut icon" href="{{ pathto($site_favicon) }}" type="image/x-icon">
+    <?php } ?>
+    
     <!-- Core Bootstrap 5.3 -->
     <link href="{{ pathto('css/bootstrap5.3.8.min.css') }}" rel="stylesheet">
     <!-- FontAwesome & Fonts -->
@@ -133,8 +138,45 @@ $is_sticky = !empty($theme_config['sticky_header']) ? 'sticky-top' : '';
     </style>
     
     {{ $custom_js_header }}
+    <?php do_action('wp_head'); ?>
 </head>
 <body>
+    <?php if (!empty($site_loader)) { ?>
+        <!-- Preloader -->
+        <div id="preloader" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #ffffff; z-index: 999999; display: flex; align-items: center; justify-content: center; transition: opacity 0.5s ease, visibility 0.5s ease;">
+            <div class="preloader-inner" style="text-align: center;">
+                <img src="{{ pathto($site_loader) }}" alt="Loading..." style="max-height: 100px; animation: wowZoomIn 10s ease-in-out infinite;">
+            </div>
+        </div>
+        <script>
+            window.addEventListener('load', function() {
+                var preloader = document.getElementById('preloader');
+                if (preloader) {
+                    preloader.style.opacity = '0';
+                    preloader.style.visibility = 'hidden';
+                    setTimeout(function() {
+                        preloader.remove();
+                    }, 500);
+                }
+            });
+        </script>
+        <style>
+            @keyframes wowZoomIn {
+                0% {
+                    opacity: 0;
+                    transform: scale3d(0.3, 0.3, 0.3);
+                }
+                50% {
+                    opacity: 1;
+                    transform: scale3d(1.1, 1.1, 1.1);
+                }
+                100% {
+                    opacity: 0.9;
+                    transform: scale3d(1, 1, 1);
+                }
+            }
+        </style>
+    <?php } ?>
     <!-- Topbar Navigation -->
     <nav class="navbar navbar-expand-lg navbar-frontend {{ $is_sticky }}">
         <div class="container">
@@ -158,7 +200,7 @@ $is_sticky = !empty($theme_config['sticky_header']) ? 'sticky-top' : '';
                         </li>
                     <?php } else { ?>
                         <?php foreach ($main_menu_items as $item) { 
-                            $href = $item['type'] === 'custom' ? $item['url'] : ($item['type'] === 'page' ? pathto('page/' . (new \App\Models\PostModel())->getPostById((int)$item['object_id'])->slug) : pathto('category/' . (new \App\Models\TaxonomyModel())->getTaxonomyById((int)$item['object_id'])->slug));
+                            $href = $item['type'] === 'custom' ? $item['url'] : ($item['type'] === 'page' ? pathto((new \App\Models\PostModel())->getPostById((int)$item['object_id'])->slug) : pathto('category/' . (new \App\Models\TaxonomyModel())->getTaxonomyById((int)$item['object_id'])->slug));
                             ?>
                             <li class="nav-item">
                                 <a class="nav-link" href="{{ $href }}">{{ htmlspecialchars($item['title'], ENT_QUOTES, 'UTF-8') }}</a>

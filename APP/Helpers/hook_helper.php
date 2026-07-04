@@ -30,3 +30,32 @@ if (!function_exists('apply_filters')) {
         return HookManager::getInstance()->applyFilters($hook, $value, ...$args);
     }
 }
+
+if (!function_exists('boot_active_modules')) {
+    function boot_active_modules(): void
+    {
+        static $booted = false;
+        if ($booted) {
+            return;
+        }
+        $booted = true;
+        try {
+            $extensionModel = new \App\Models\ExtensionModel();
+            $activeModules = $extensionModel->find_all('modules', '', [['is_active', '=', 1]]);
+            if ($activeModules) {
+                foreach ($activeModules as $module) {
+                    $moduleName = is_array($module) ? ($module['name'] ?? '') : ($module->name ?? '');
+                    if (!empty($moduleName)) {
+                        $initFile = APPPATH . 'Modules/' . $moduleName . '/init.php';
+                        if (file_exists($initFile)) {
+                            require_once $initFile;
+                        }
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // Ignore during installation or if table missing
+        }
+    }
+}
+

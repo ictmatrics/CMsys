@@ -27,6 +27,7 @@ class FrontendController extends Controller
         $this->menuModel = new MenuModel();
 
         $this->checkMaintenance();
+        boot_active_modules();
     }
 
     private function getLayoutData(): array
@@ -102,6 +103,10 @@ class FrontendController extends Controller
         $tags = $this->taxonomyModel->getPostTaxonomies((int)$post->id, 'tag');
         $comments = $this->commentModel->getCommentsByPost((int)$post->id, 'approved');
 
+        if (function_exists('apply_filters')) {
+            $post->content = apply_filters('the_content', $post->content);
+        }
+
         $data = array_merge($this->getLayoutData(), [
             'post' => $post,
             'post_categories' => $categories,
@@ -123,9 +128,30 @@ class FrontendController extends Controller
             exit();
         }
 
+        $showOnFront = $this->optionModel->getOption('show_on_front', 'posts');
+        if ($showOnFront === 'page') {
+            $pageForPostsId = (int)$this->optionModel->getOption('page_for_posts', '0');
+            if ($pageForPostsId > 0 && (int)$page->id === $pageForPostsId) {
+                $postsPerPage = (int)$this->optionModel->getOption('posts_per_page', '10');
+                $posts = $this->postModel->getPublishedPosts($postsPerPage);
+
+                $data = array_merge($this->getLayoutData(), [
+                    'posts' => $posts,
+                    'title' => $page->title
+                ]);
+
+                echo $this->view('Themes/' . $data['theme_name'] . '/home', $data);
+                return;
+            }
+        }
+
         // Block-builder blocks integration
         $blocksJson = $this->postModel->getSingleMeta((int)$page->id, 'page_blocks', '[]');
         $blocks = json_decode($blocksJson, true);
+
+        if (function_exists('apply_filters')) {
+            $page->content = apply_filters('the_content', $page->content);
+        }
 
         $data = array_merge($this->getLayoutData(), [
             'page' => $page,
@@ -134,6 +160,101 @@ class FrontendController extends Controller
         ]);
 
         echo $this->view('Themes/' . $data['theme_name'] . '/page', $data);
+    }
+
+    public function detail(string $slug)
+    {
+        $slug = validate_data($slug);
+
+        // 1. Try finding a post with this slug
+        $post = $this->postModel->getPostBySlug($slug, 'post');
+        if ($post && $this->isAuthorized($post)) {
+            $categories = $this->taxonomyModel->getPostTaxonomies((int)$post->id, 'category');
+            $tags = $this->taxonomyModel->getPostTaxonomies((int)$post->id, 'tag');
+            $comments = $this->commentModel->getCommentsByPost((int)$post->id, 'approved');
+
+            if (function_exists('apply_filters')) {
+                $post->content = apply_filters('the_content', $post->content);
+            }
+
+            $data = array_merge($this->getLayoutData(), [
+                'post' => $post,
+                'post_categories' => $categories,
+                'post_tags' => $tags,
+                'comments' => $comments,
+                'title' => $post->title
+            ]);
+
+            echo $this->view('Themes/' . $data['theme_name'] . '/post', $data);
+            return;
+        }
+
+        // 2. Try finding a page with this slug
+        $page = $this->postModel->getPostBySlug($slug, 'page');
+        if ($page && $this->isAuthorized($page)) {
+            $showOnFront = $this->optionModel->getOption('show_on_front', 'posts');
+            if ($showOnFront === 'page') {
+                $pageForPostsId = (int)$this->optionModel->getOption('page_for_posts', '0');
+                if ($pageForPostsId > 0 && (int)$page->id === $pageForPostsId) {
+                    $postsPerPage = (int)$this->optionModel->getOption('posts_per_page', '10');
+                    $posts = $this->postModel->getPublishedPosts($postsPerPage);
+
+                    $data = array_merge($this->getLayoutData(), [
+                        'posts' => $posts,
+                        'title' => $page->title
+                    ]);
+
+                    echo $this->view('Themes/' . $data['theme_name'] . '/home', $data);
+                    return;
+                }
+            }
+
+            // Block-builder blocks integration
+            $blocksJson = $this->postModel->getSingleMeta((int)$page->id, 'page_blocks', '[]');
+            $blocks = json_decode($blocksJson, true);
+
+            if (function_exists('apply_filters')) {
+                $page->content = apply_filters('the_content', $page->content);
+            }
+
+            $data = array_merge($this->getLayoutData(), [
+                'page' => $page,
+                'blocks' => $blocks,
+                'title' => $page->title
+            ]);
+
+            echo $this->view('Themes/' . $data['theme_name'] . '/page', $data);
+            return;
+        }
+
+        // 3. Try finding a custom post type entry with this slug
+        $cptEntry = $this->postModel->find_single('posts', null, '', [
+            ['slug', '=', $slug]
+        ]);
+        if ($cptEntry && !in_array($cptEntry->type, ['post', 'page'], true) && $this->isAuthorized($cptEntry)) {
+            $cptEntry->meta = $this->postModel->getPostMeta((int)$cptEntry->id);
+            
+            if (function_exists('apply_filters')) {
+                $cptEntry->content = apply_filters('the_content', $cptEntry->content);
+            }
+            $data = array_merge($this->getLayoutData(), [
+                'entry' => $cptEntry,
+                'title' => $cptEntry->title
+            ]);
+
+            try {
+                echo $this->view('Themes/' . $data['theme_name'] . '/cpt_' . $cptEntry->type, $data);
+            } catch (\Throwable $e) {
+                $data['page'] = $cptEntry;
+                $data['blocks'] = [];
+                echo $this->view('Themes/' . $data['theme_name'] . '/page', $data);
+            }
+            return;
+        }
+
+        // 4. Fallback to 404
+        redirect('404.php');
+        exit();
     }
 
     public function category(string $slug)
@@ -229,6 +350,10 @@ class FrontendController extends Controller
         if (!$post || !$this->isAuthorized($post)) {
             redirect('404.php');
             exit();
+        }
+
+        if (function_exists('apply_filters')) {
+            $post->content = apply_filters('the_content', $post->content);
         }
 
         $data = array_merge($this->getLayoutData(), [

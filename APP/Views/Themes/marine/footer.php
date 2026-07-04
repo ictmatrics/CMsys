@@ -21,7 +21,7 @@ $custom_js_footer  = $custom_js_footer ?? '';
                             <li><a href="{{ pathto('login') }}">Admin Login</a></li>
                         <?php } else { ?>
                             <?php foreach ($footer_menu_items as $item) { 
-                                $href = $item['type'] === 'custom' ? $item['url'] : ($item['type'] === 'page' ? pathto('page/' . (new \App\Models\PostModel())->getPostById((int)$item['object_id'])->slug) : pathto('category/' . (new \App\Models\TaxonomyModel())->getTaxonomyById((int)$item['object_id'])->slug));
+                                $href = $item['type'] === 'custom' ? $item['url'] : ($item['type'] === 'page' ? pathto((new \App\Models\PostModel())->getPostById((int)$item['object_id'])->slug) : pathto('category/' . (new \App\Models\TaxonomyModel())->getTaxonomyById((int)$item['object_id'])->slug));
                                 ?>
                                 <li class="mb-2"><a href="{{ $href }}">{{ htmlspecialchars($item['title'], ENT_QUOTES, 'UTF-8') }}</a></li>
                             <?php } ?>
@@ -52,5 +52,6 @@ $custom_js_footer  = $custom_js_footer ?? '';
     <script src="{{ pathto('js/bootstrap5.3.8.bundle.min.js') }}"></script>
     
     {{ $custom_js_footer }}
+    <?php do_action('wp_footer'); ?>
 </body>
 </html>

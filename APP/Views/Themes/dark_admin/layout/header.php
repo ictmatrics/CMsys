@@ -16,7 +16,8 @@
     
     <style>
         body {
-            background-color: #f4f6f9;
+            background-color: #121212;
+            color: #e0e0e0;
             font-family: 'Inter', sans-serif;
             overflow-x: hidden;
         }
@@ -25,22 +26,25 @@
             width: 100%;
             align-items: stretch;
         }
+        
+        /* Sidebar Styling */
         #sidebar {
             min-width: 250px;
             max-width: 250px;
-            background: #111417; /* Darker sidebar for contrast */
+            background: #111417;
             color: #fff;
             transition: all 0.3s;
             min-height: 100vh;
+            border-right: 1px solid #222;
         }
         #sidebar .sidebar-header {
             padding: 20px;
             background: #0d1012;
-            border-bottom: 1px solid #2d323e;
+            border-bottom: 1px solid #222;
         }
         #sidebar ul.components {
             padding: 20px 0;
-            border-bottom: 1px solid #2d323e;
+            border-bottom: 1px solid #222;
         }
         #sidebar ul p {
             color: #fff;
@@ -56,12 +60,14 @@
         }
         #sidebar ul li a:hover {
             color: #fff;
-            background: #2d323e;
+            background: #1e1e1e;
         }
         #sidebar ul li.active > a {
             color: #fff;
-            background: #e82a5c; /* Neon pink accent for dark theme */
+            background: #e82a5c;
         }
+        
+        /* Content Styling */
         #content {
             width: 100%;
             padding: 30px;
@@ -69,50 +75,40 @@
             transition: all 0.3s;
         }
         .navbar-admin {
-            background: #fff;
-            border: none;
+            background: #1e1e1e;
+            border: 1px solid #333;
             border-radius: 8px;
             margin-bottom: 30px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
             padding: 15px 20px;
         }
         .card-custom {
-            border: none;
+            border: 1px solid #333;
             border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
             margin-bottom: 30px;
-            background: #fff;
+            background: #1e1e1e;
         }
         .card-custom-header {
             background: transparent;
-            border-bottom: 1px solid #f0f0f0;
+            border-bottom: 1px solid #333;
             padding: 20px 30px;
             font-weight: 700;
+            color: #e0e0e0;
         }
         .card-custom-body {
             padding: 30px;
         }
         
-        /* ----------------------------------------------------- */
-        /* DARK THEME OVERRIDES */
-        /* ----------------------------------------------------- */
-        body {
-            background-color: #121212 !important;
-            color: #e0e0e0 !important;
-        }
-        .navbar-admin, .card-custom, .bg-white {
-            background: #1e1e1e !important;
-            color: #e0e0e0 !important;
-            box-shadow: none !important;
-            border: 1px solid #333 !important;
-        }
+        /* General Elements & Overrides */
         .text-dark {
             color: #e0e0e0 !important;
         }
         .text-muted {
             color: #8a929a !important;
         }
-        .card-custom-header, .table th, .border-bottom {
+        .bg-white {
+            background-color: #1e1e1e !important;
+        }
+        .table th, .border-bottom {
             border-bottom-color: #333 !important;
             color: #e0e0e0 !important;
         }
@@ -124,6 +120,8 @@
         tbody tr:hover {
             background-color: rgba(255, 255, 255, 0.05) !important;
         }
+        
+        /* Forms */
         input, select, textarea, .form-control {
             background-color: #2c2c2c !important;
             color: #e0e0e0 !important;
@@ -135,6 +133,8 @@
             border-color: #e82a5c !important;
             box-shadow: 0 0 0 0.2rem rgba(232, 42, 92, 0.25) !important;
         }
+        
+        /* Buttons & Badges */
         .btn-primary {
             background-color: #e82a5c !important;
             border-color: #e82a5c !important;
@@ -147,6 +147,8 @@
             background-color: #e82a5c !important;
             color: #fff !important;
         }
+        
+        /* Navigation Tabs & List Groups */
         .nav-tabs .nav-link {
             color: #a3aab4 !important;
         }
@@ -160,7 +162,50 @@
             border-color: #333 !important;
             color: #e0e0e0 !important;
         }
+        
+        /* Dark Theme View specific overrides */
+        .bg-light {
+            background-color: #2a2a2a !important;
+            border-color: #333 !important;
+        }
+        .table-light {
+            background-color: #2d2d2d !important;
+            color: #e0e0e0 !important;
+        }
+        .table-light th {
+            background-color: #2d2d2d !important;
+            color: #e0e0e0 !important;
+            border-color: #333 !important;
+        }
+        .input-group-text {
+            background-color: #2c2c2c !important;
+            border-color: #444 !important;
+            color: #e0e0e0 !important;
+        }
+        .badge.bg-light {
+            background-color: #2d2d2d !important;
+            color: #e0e0e0 !important;
+            border-color: #444 !important;
+        }
+        .badge.bg-secondary-soft {
+            background-color: rgba(232, 42, 92, 0.1) !important;
+            color: #e82a5c !important;
+        }
+        .theme-preview-box {
+            background-color: #2a2a2a !important;
+            border-color: #333 !important;
+        }
+        .text-gray-800 {
+            color: #fff !important;
+        }
+        .text-primary {
+            color: #e82a5c !important;
+        }
+        #themes-list-table .text-dark {
+            color: #ffffff !important;
+        }
     </style>
+    <?php do_action('admin_head'); ?>
 </head>
 <body>
     <div class="wrapper animate__animated animate__fadeIn">
@@ -215,13 +260,13 @@
 
                 <!-- Admin Only Menus -->
                 <?php if ($_SESSION['ICTM_Auth']['role'] === 'admin') { ?>
-                    <li class="{{ $title === 'Custom Post Types' ? 'active' : '' ?>">
+                    <li class="{{ $title === 'Custom Post Types' ? 'active' : '' }}">
                         <a href="{{ pathto('admin/cpts') }}"><i class="fa-solid fa-gear me-2"></i> Custom Post Types</a>
                     </li>
-                    <li class="{{ $title === 'Theme Manager' ? 'active' : '' ?>">
+                    <li class="{{ $title === 'Theme Manager' ? 'active' : '' }}">
                         <a href="{{ pathto('admin/themes') }}"><i class="fa-solid fa-palette me-2"></i> Theme Manager</a>
                     </li>
-                    <li class="{{ $title === 'Module Manager' ? 'active' : '' ?>">
+                    <li class="{{ $title === 'Module Manager' ? 'active' : '' }}">
                         <a href="{{ pathto('admin/modules') }}"><i class="fa-solid fa-puzzle-piece me-2"></i> Module Manager</a>
                     </li>
                     <li class="{{ $title === 'User Management' ? 'active' : '' }}">
@@ -233,7 +278,7 @@
                     <li class="{{ $title === 'Import & Export' ? 'active' : '' }}">
                         <a href="{{ pathto('admin/import-export') }}"><i class="fa-solid fa-file-export me-2"></i> Backup & Sync</a>
                     </li>
-                    <li class="{{ $title === 'System Settings' ? 'active' : '' ?>">
+                    <li class="{{ $title === 'System Settings' ? 'active' : '' }}">
                         <a href="{{ pathto('admin/settings') }}"><i class="fa-solid fa-sliders me-2"></i> Site Options</a>
                     </li>
                 <?php } ?>

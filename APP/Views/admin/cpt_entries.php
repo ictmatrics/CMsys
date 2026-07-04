@@ -23,7 +23,7 @@
                             <td>{{ $item['id'] }}</td>
                             <td>
                                 <strong>{{ htmlspecialchars($item['title'], ENT_QUOTES, 'UTF-8') }}</strong>
-                                <small class="text-muted d-block font-monospace">/cpt/{{ $cpt['name'] }}/{{ $item['slug'] }}</small>
+                                <small class="text-muted d-block font-monospace">/{{ $item['slug'] }}</small>
                             </td>
                             <td>
                                 <select class="form-select form-select-sm status-toggle" data-id="{{ $item['id'] }}" data-action="post_status" style="width: 120px;">

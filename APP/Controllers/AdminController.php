@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controllers;
@@ -38,6 +39,7 @@ class AdminController extends Controller
         $this->mediaModel = new MediaModel();
         $this->menuModel = new MenuModel();
         $this->extensionModel = new ExtensionModel();
+        boot_active_modules();
     }
 
     private function checkAdminOnly(): void
@@ -56,6 +58,19 @@ class AdminController extends Controller
                 }
             }
         }
+
+        if (str_starts_with($view, 'Modules/') || str_contains($view, 'Modules/')) {
+            $viewFile = APPPATH . $view . '.php';
+            if (file_exists($viewFile)) {
+                $content = file_get_contents($viewFile);
+                $content = preg_replace('/\{\{([^}]+)\}\}/', '<?php echo $1; ?>', $content);
+                ob_start();
+                extract($data);
+                eval('?>' . $content);
+                return ob_get_clean();
+            }
+        }
+
         return parent::view($view, $data);
     }
 
@@ -91,7 +106,7 @@ class AdminController extends Controller
     public function settings()
     {
         $this->checkAdminOnly();
-        
+
         $data = [
             'title' => 'System Settings',
             'site_title' => $this->optionModel->getOption('site_title'),
@@ -150,7 +165,7 @@ class AdminController extends Controller
                 $ext = pathinfo($_FILES[$key]['name'], PATHINFO_EXTENSION);
                 $filename = $key . '_' . time() . '.' . $ext;
                 $targetFile = $uploadDir . $filename;
-                
+
                 if (move_uploaded_file($_FILES[$key]['tmp_name'], $targetFile)) {
                     $webPath = 'Writables/images/' . $filename;
                     $this->optionModel->updateOption($key, $webPath);
@@ -198,7 +213,7 @@ class AdminController extends Controller
         }
 
         $categories = $this->taxonomyModel->getAllTaxonomies('category');
-        
+
         $data = [
             'title' => $post ? 'Edit Post' : 'Add New Post',
             'post' => $post,
@@ -214,7 +229,7 @@ class AdminController extends Controller
     public function savePost()
     {
         $id = isset($_POST['id']) && !empty($_POST['id']) ? (int)$_POST['id'] : 0;
-        
+
         $postData = [
             'title' => validate_data($_POST['title'] ?? ''),
             'slug' => validate_data($_POST['slug'] ?? ''),
@@ -480,7 +495,7 @@ class AdminController extends Controller
 
             $originalName = $_FILES['file']['name'];
             $ext = pathinfo($originalName, PATHINFO_EXTENSION);
-            
+
             $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'mp4'];
             if (!in_array(strtolower($ext), $allowedExtensions)) {
                 echo json_encode(['status' => 'error', 'message' => 'Unsupported file type. Allowed extensions: ' . implode(', ', $allowedExtensions)]);
@@ -493,7 +508,7 @@ class AdminController extends Controller
 
             if (move_uploaded_file($_FILES['file']['tmp_name'], $targetFile)) {
                 $webPath = $subPath . $filename;
-                
+
                 // Get dimensions if it's an image
                 $dimensions = '';
                 if (str_starts_with($_FILES['file']['type'], 'image/')) {
@@ -546,7 +561,7 @@ class AdminController extends Controller
     {
         $menus = $this->menuModel->getMenus();
         $activeMenuId = (int)($_GET['menu'] ?? (isset($menus[0]['id']) ? $menus[0]['id'] : 0));
-        
+
         $menuItems = [];
         $pages = [];
         $categories = [];
@@ -573,7 +588,7 @@ class AdminController extends Controller
     {
         $id = isset($_POST['id']) && !empty($_POST['id']) ? (int)$_POST['id'] : 0;
         $name = validate_data($_POST['name'] ?? '');
-        $location = validate_data($_POST['location'] ?? null);
+        $location = isset($_POST['location']) ? validate_data($_POST['location']) : null;
 
         $data = [
             'name' => $name,
@@ -590,7 +605,7 @@ class AdminController extends Controller
         } else {
             flash('error_msg', 'Failed to save menu.', 'alert alert-danger');
         }
-        
+
         redirect('admin/menus?menu=' . ($id > 0 ? $id : $res));
         exit();
     }
@@ -627,7 +642,7 @@ class AdminController extends Controller
         $this->checkAdminOnly();
         $settingsJson = $this->optionModel->getOption('widget_settings', '{"sidebar_widgets":[],"sidebar_layout":"right"}');
         $settings = json_decode($settingsJson, true);
-        
+
         $pages = $this->postModel->getAllPosts('page', 'published');
 
         echo $this->view('admin/widgets', [
@@ -640,7 +655,7 @@ class AdminController extends Controller
     public function saveWidgets()
     {
         $this->checkAdminOnly();
-        
+
         $layout = validate_data($_POST['sidebar_layout'] ?? 'right');
         $widgets = $_POST['widgets'] ?? [];
 
@@ -660,11 +675,11 @@ class AdminController extends Controller
     {
         $this->checkAdminOnly();
         $themes = $this->extensionModel->find_all('themes');
-        
+
         // Scan themes directory to get installed ones that might not be in DB
         $themesDir = APPPATH . 'Views/Themes/';
         $localThemes = [];
-        
+
         $dirsToScan = [];
         if (is_dir($themesDir)) {
             $dirs = array_diff(scandir($themesDir), ['.', '..']);
@@ -674,7 +689,7 @@ class AdminController extends Controller
                 }
             }
         }
-        
+
         $adminThemeDir = APPPATH . 'Views/admin';
         if (is_dir($adminThemeDir)) {
             $dirsToScan[] = $adminThemeDir;
@@ -710,7 +725,7 @@ class AdminController extends Controller
         if (isset($_FILES['theme_zip']) && $_FILES['theme_zip']['error'] === UPLOAD_ERR_OK) {
             $zipPath = $_FILES['theme_zip']['tmp_name'];
             $res = $this->extensionModel->installExtension($zipPath, 'theme');
-            
+
             if ($res['status'] === 'success') {
                 flash('success_msg', $res['message'], 'alert alert-success');
             } else {
@@ -748,7 +763,7 @@ class AdminController extends Controller
         if ($name === 'classic' || $name === 'admin') {
             flash('error_msg', 'The ' . $name . ' theme is a system core and cannot be deleted.', 'alert alert-warning');
             redirect('admin/themes');
-            
+
             exit();
         }
 
@@ -766,7 +781,7 @@ class AdminController extends Controller
     public function modules()
     {
         $this->checkAdminOnly();
-        
+
         $modulesDir = APPPATH . 'Modules/';
         $localModules = [];
         if (is_dir($modulesDir)) {
@@ -778,7 +793,7 @@ class AdminController extends Controller
                         // Check active status from DB registry
                         $dbReg = $this->extensionModel->find_single('modules', null, '', [['name', '=', $manifest['name']]]);
                         $isActive = $dbReg ? (int)$dbReg->is_active : 0;
-                        
+
                         $localModules[] = [
                             'name' => $manifest['name'],
                             'version' => $manifest['version'],
@@ -934,7 +949,7 @@ class AdminController extends Controller
     public function saveCpt()
     {
         $this->checkAdminOnly();
-        
+
         $name = validate_data($_POST['name'] ?? '');
         $label = validate_data($_POST['label'] ?? '');
         $description = validate_data($_POST['description'] ?? '');
@@ -1089,7 +1104,7 @@ class AdminController extends Controller
     public function notifications()
     {
         $this->checkAdminOnly();
-        
+
         $data = [
             'title' => 'Email SMTP Configurations',
             'smtp_host' => $this->optionModel->getOption('smtp_host'),
@@ -1134,11 +1149,18 @@ class AdminController extends Controller
 
         $tables = ['site_options', 'users', 'posts', 'post_meta', 'taxonomies', 'post_taxonomies', 'comments', 'media_library', 'menus', 'menu_items', 'modules', 'themes'];
         $sqlDump = "-- CMsys Database Export\n-- Generated on: " . now() . "\n\nSET FOREIGN_KEY_CHECKS=0;\n";
-        
+
         $db = db();
+
+        // Use PHP Reflection to access the private connection property of the QueryBuilder class
+        $reflection = new \ReflectionClass($db);
+        $connProp = $reflection->getProperty('conn');
+        $connProp->setAccessible(true);
+        $conn = $connProp->getValue($db);
+
         foreach ($tables as $table) {
             $sqlDump .= "DROP TABLE IF EXISTS `$table`;\n";
-            
+
             // Get structure
             $showCreate = $db->query("SHOW CREATE TABLE `$table`");
             if (is_array($showCreate) && !empty($showCreate)) {
@@ -1150,9 +1172,14 @@ class AdminController extends Controller
             $data = $db->get();
             foreach ($data as $row) {
                 $cols = implode("`, `", array_keys($row));
-                $vals = array_map(function($v) use ($db) {
-                    if ($v === null) return 'NULL';
-                    return "'" . $db->conn->real_escape_string($v) . "'";
+                $vals = array_map(function ($v) use ($conn) {
+                    if ($v === null) {
+                        return 'NULL';
+                    }
+                    if (is_int($v) || is_float($v)) {
+                        return $v;
+                    }
+                    return "'" . $conn->real_escape_string((string)$v) . "'";
                 }, array_values($row));
                 $valsStr = implode(", ", $vals);
                 $sqlDump .= "INSERT INTO `$table` (`$cols`) VALUES ($valsStr);\n";
@@ -1173,9 +1200,64 @@ class AdminController extends Controller
 
         if (isset($_FILES['import_file']) && $_FILES['import_file']['error'] === UPLOAD_ERR_OK) {
             $sql = file_get_contents($_FILES['import_file']['tmp_name']);
-            
-            // Execute batch queries
-            $queries = explode(';', $sql);
+
+            // Strip SQL comments and empty lines
+            $lines = explode("\n", $sql);
+            $cleanLines = [];
+            foreach ($lines as $line) {
+                $trimmed = trim($line);
+                if ($trimmed === '' || strpos($trimmed, '--') === 0 || strpos($trimmed, '#') === 0) {
+                    continue;
+                }
+                $cleanLines[] = $line;
+            }
+            $sql = implode("\n", $cleanLines);
+
+            // Parse and split queries safely by semicolon, honoring quoted strings and escapes
+            $queries = [];
+            $query = '';
+            $inString = false;
+            $stringChar = '';
+            $escaped = false;
+            $length = strlen($sql);
+
+            for ($i = 0; $i < $length; $i++) {
+                $char = $sql[$i];
+
+                if ($escaped) {
+                    $query .= $char;
+                    $escaped = false;
+                    continue;
+                }
+
+                if ($char === '\\') {
+                    $query .= $char;
+                    $escaped = true;
+                    continue;
+                }
+
+                if ($inString) {
+                    $query .= $char;
+                    if ($char === $stringChar) {
+                        $inString = false;
+                    }
+                } else {
+                    if ($char === "'" || $char === '"') {
+                        $inString = true;
+                        $stringChar = $char;
+                        $query .= $char;
+                    } elseif ($char === ';') {
+                        $queries[] = $query;
+                        $query = '';
+                    } else {
+                        $query .= $char;
+                    }
+                }
+            }
+            if (trim($query) !== '') {
+                $queries[] = $query;
+            }
+
             $db = db();
             $db->query("SET FOREIGN_KEY_CHECKS=0");
             $success = 0;
@@ -1277,11 +1359,16 @@ class AdminController extends Controller
         $configJson = $this->optionModel->getOption($configKey, '{}');
         $config = json_decode($configJson, true);
 
-        echo $this->view('admin/theme_customize', [
+        $data = [
             'title' => 'Customize Theme: ' . ucfirst($name),
             'theme_name' => $name,
             'config' => is_array($config) ? $config : []
-        ]);
+        ];
+
+        $data = apply_filters('admin_theme_customize_data', $data, $name);
+        $viewFile = apply_filters('admin_theme_customize_view', 'admin/theme_customize', $name);
+
+        echo $this->view($viewFile, $data);
     }
 
     public function saveThemeCustomization(string $name)
@@ -1309,8 +1396,12 @@ class AdminController extends Controller
             'footer_scripts'  => $footerScripts,
         ];
 
+        $config = apply_filters('admin_theme_customize_save_config', $config, $name);
+
         $configKey = "theme_{$name}_config";
         $this->optionModel->updateOption($configKey, json_encode($config));
+
+        do_action('admin_theme_customize_saved', $name, $config);
 
         flash('success_msg', 'Theme customization saved successfully!', 'alert alert-success');
         redirect('admin/theme/customize/' . $name);

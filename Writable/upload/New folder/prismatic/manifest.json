@@ -1,0 +1,10 @@
+{
+    "name": "Prismatic",
+    "version": "1.0.0",
+    "author": "Antigravity",
+    "description": "Syntax highlighter module using Prism.js for code snippets.",
+    "scope": "frontend",
+    "require": {
+        "php": ">=8.1"
+    }
+}

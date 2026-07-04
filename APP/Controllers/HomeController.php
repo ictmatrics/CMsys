@@ -24,6 +24,7 @@ class HomeController extends Controller
         $this->menuModel = new MenuModel();
         
         $this->checkMaintenance();
+        boot_active_modules();
     }
 
     private function getLayoutData(): array
@@ -88,8 +89,30 @@ class HomeController extends Controller
 
         $data = $this->getLayoutData();
         
+        $showOnFront = $this->optionModel->getOption('show_on_front', 'posts');
+        if ($showOnFront === 'page') {
+            $pageId = (int)$this->optionModel->getOption('page_on_front', '0');
+            if ($pageId > 0) {
+                $page = $this->postModel->getPostById($pageId);
+                if ($page && $page->status === 'published') {
+                    $blocksJson = $this->postModel->getSingleMeta((int)$page->id, 'page_blocks', '[]');
+                    $blocks = json_decode($blocksJson, true);
+
+                    $data = array_merge($data, [
+                        'page' => $page,
+                        'blocks' => $blocks,
+                        'title' => $page->title
+                    ]);
+
+                    echo $this->view('Themes/' . $data['theme_name'] . '/page', $data);
+                    return;
+                }
+            }
+        }
+
         // Fetch posts for the homepage loop
-        $posts = $this->postModel->getPublishedPosts();
+        $postsPerPage = (int)$this->optionModel->getOption('posts_per_page', '10');
+        $posts = $this->postModel->getPublishedPosts($postsPerPage);
         $data['posts'] = $posts;
         $data['title'] = 'Home';
 

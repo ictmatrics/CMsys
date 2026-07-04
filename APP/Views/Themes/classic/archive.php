@@ -46,7 +46,7 @@
                             <div class="col-md-<?= !empty($img) ? '8' : '12' ?> p-4 d-flex flex-column justify-content-between">
                                 <div>
                                     <h3 class="font-weight-bold mb-2">
-                                        <a href="{{ pathto('post/' . $post['slug']) }}" class="text-decoration-none text-dark">{{ htmlspecialchars($post['title'], ENT_QUOTES, 'UTF-8') }}</a>
+                                        <a href="{{ pathto($post['slug']) }}" class="text-decoration-none text-dark">{{ htmlspecialchars($post['title'], ENT_QUOTES, 'UTF-8') }}</a>
                                     </h3>
                                     <p class="text-muted small mb-3">
                                         <i class="fa-solid fa-calendar me-2"></i> {{ date('M d, Y', strtotime($post['created_at'])) }}
@@ -56,7 +56,7 @@
                                     </p>
                                 </div>
                                 <div>
-                                    <a href="{{ pathto('post/' . $post['slug']) }}" class="btn btn-outline-primary btn-sm rounded-pill px-3">Read More &rarr;</a>
+                                     <a href="{{ pathto($post['slug']) }}" class="btn btn-outline-primary btn-sm rounded-pill px-3">Read More &rarr;</a>
                                 </div>
                             </div>
                         </div>

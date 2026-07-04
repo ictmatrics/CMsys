@@ -1,3 +1,11 @@
+/* Auto-detect Base URL from stylesheet path */
+(() => {
+  const link = document.querySelector('link[href*="css/style.css"]')?.getAttribute('href');
+  window.BASE_URL = link && link.indexOf('css/style.css') !== -1
+    ? link.split('css/style.css')[0]
+    : window.location.origin + '/';
+})();
+
 /* First letter Capital */
 function ucwords(str) {
   return str
@@ -149,3 +157,168 @@ function closeModal(modalId) {
     modalInstance.hide();
   }
 }
+/**
+ * Reusable Media Library Image Selector
+ *
+ * Usage:
+ * Add class 'btn-select-media' and 'data-target="input_id"' to any button:
+ * <button class="btn btn-primary btn-select-media" data-target="featured_image">Select Image</button>
+ *
+ * Optional:
+ * Add an img element with ID 'input_id_preview' to show the preview automatically.
+ */
+function chooseImageFromLibrary(targetFieldId, filterType = 'all') {
+  let mediaModalEl = document.getElementById('mediaSelectModal');
+  if (!mediaModalEl) {
+    const modalHtml = `
+      <div class="modal fade" id="mediaSelectModal" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog modal-lg modal-dialog-centered">
+              <div class="modal-content shadow-lg border-0 rounded-4">
+                  <div class="modal-header bg-light border-bottom-0 pb-0">
+                      <h5 class="modal-title font-weight-bold text-dark">
+                          <i class="fa-solid fa-images text-primary me-2"></i> Select Asset from Media Library
+                      </h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body p-4" style="max-height: 500px; overflow-y: auto;">
+                      <div class="row row-cols-2 row-cols-md-4 g-3" id="modalMediaList"></div>
+                  </div>
+              </div>
+          </div>
+      </div>
+    `;
+    $("body").append(modalHtml);
+    mediaModalEl = document.getElementById('mediaSelectModal');
+  }
+
+  window._mediaTarget = targetFieldId;
+  window._mediaFilterType = filterType;
+
+  let modalInstance = bootstrap.Modal.getInstance(mediaModalEl);
+  if (!modalInstance) {
+    modalInstance = new bootstrap.Modal(mediaModalEl, { backdrop: true, keyboard: true });
+  }
+
+  $('#modalMediaList').html(
+      '<div class="col-12 text-center py-5">' +
+      '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading…</span></div>' +
+      '<p class="text-muted mt-2 small">Loading media assets…</p>' +
+      '</div>'
+  );
+
+  modalInstance.show();
+
+  const mediaUrl = (window.BASE_URL || '') + 'admin/media';
+  $.ajax({
+      url: mediaUrl,
+      type: 'GET',
+      dataType: 'json',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      success: function (data) {
+          $('#modalMediaList').empty();
+          let items = (data || []).filter(item => item.mime_type && (item.mime_type.startsWith('image/') || item.mime_type.startsWith('video/')));
+
+          if (window._mediaFilterType === 'image') {
+              items = items.filter(item => item.mime_type.startsWith('image/'));
+          } else if (window._mediaFilterType === 'video') {
+              items = items.filter(item => item.mime_type.startsWith('video/'));
+          }
+
+          if (items.length === 0) {
+              $('#modalMediaList').html(
+                  '<div class="col-12 text-center text-muted py-4">' +
+                  '<i class="fa-solid fa-image fa-2x mb-2 d-block opacity-50"></i>' +
+                  'No matching media assets found in your Media Library.' +
+                  '</div>'
+              );
+              return;
+          }
+
+          items.forEach(function (item) {
+              const safeName = $('<span>').text(item.original_name).html();
+              const isVideo = item.mime_type && item.mime_type.startsWith('video/');
+              const previewHtml = isVideo
+                  ? '<div class="d-flex align-items-center justify-content-center bg-light text-muted" style="height:100px;"><i class="fa-solid fa-file-video fa-2x text-secondary"></i></div>'
+                  : '<img src="' + item.path + '" class="card-img-top p-1" style="height:100px;object-fit:contain;" loading="lazy">';
+
+              const $card = $(
+                  '<div class="col text-center">' +
+                      '<div class="card h-100 shadow-sm border select-media-card rounded-3 overflow-hidden"' +
+                          ' data-path="' + item.path + '" data-mime="' + item.mime_type + '" style="cursor:pointer;" role="button" tabindex="0">' +
+                          previewHtml +
+                          '<div class="card-footer p-1 bg-light">' +
+                              '<span class="text-truncate d-block small px-1">' + safeName + '</span>' +
+                          '</div>' +
+                      '</div>' +
+                  '</div>'
+              );
+              $('#modalMediaList').append($card);
+          });
+      },
+      error: function () {
+          $('#modalMediaList').html(
+              '<div class="col-12 text-center text-danger py-4">' +
+              '<i class="fa-solid fa-circle-exclamation fa-2x mb-2 d-block"></i>' +
+              'Failed to load media assets. Please try again.' +
+              '</div>'
+          );
+      }
+  });
+}
+
+// Click handler to open the media library selector
+$(document).on('click', '.btn-select-media', function (e) {
+  e.preventDefault();
+  const targetId = $(this).attr('data-target');
+  if (targetId) {
+    chooseImageFromLibrary(targetId);
+  }
+});
+
+// Card selection handler inside modal
+$(document).on('click', '.select-media-card', function () {
+  const fullPath = $(this).attr('data-path');
+  const mimeType = $(this).attr('data-mime') || '';
+  const targetId = window._mediaTarget;
+  if (!fullPath || !targetId) { return; }
+
+  if (targetId === 'summernote') {
+    const context = window._activeSummernoteContext;
+    if (context) {
+      const isVideo = mimeType.startsWith('video/');
+      let html = '';
+      if (isVideo) {
+        html = `<video src="${fullPath}" controls style="max-width: 100%; display: block; margin: 10px 0;"></video>`;
+      } else {
+        html = `<img src="${fullPath}" class="img-fluid" style="max-width: 100%; display: block; margin: 10px 0;" />`;
+      }
+      context.invoke('editor.pasteHTML', html);
+    }
+  } else {
+    const baseUrl = window.BASE_URL || '';
+    const cleanedPath = (baseUrl && fullPath.startsWith(baseUrl))
+        ? fullPath.slice(baseUrl.length).replace(/^\/+/, '')
+        : fullPath;
+
+    $('#' + targetId).val(cleanedPath);
+    $('#' + targetId + '_preview').attr('src', fullPath).show();
+    $('#' + targetId + '_placeholder').hide();
+  }
+
+  const modalEl = document.getElementById('mediaSelectModal');
+  if (modalEl) {
+    const modalInstance = bootstrap.Modal.getInstance(modalEl);
+    if (modalInstance) { modalInstance.hide(); }
+  }
+});
+
+// Clear button handler for media inputs
+$(document).on('click', '.btn-clear-media', function (e) {
+  e.preventDefault();
+  const targetId = $(this).attr('data-target');
+  if (targetId) {
+    $('#' + targetId).val('');
+    $('#' + targetId + '_preview').attr('src', '').hide();
+    $('#' + targetId + '_placeholder').show();
+  }
+});

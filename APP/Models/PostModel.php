@@ -181,13 +181,16 @@ class PostModel extends Model
                         ->get();
     }
 
-    public function getPublishedPosts(): array
+    public function getPublishedPosts(int $limit = 0): array
     {
-        return $this->db->table($this->table)
-                        ->where('type', '=', 'post')
-                        ->where('status', '=', 'published')
-                        ->orderBy('created_at', 'DESC')
-                        ->get();
+        $builder = $this->db->table($this->table)
+                            ->where('type', '=', 'post')
+                            ->where('status', '=', 'published')
+                            ->orderBy('created_at', 'DESC');
+        if ($limit > 0) {
+            $builder->limit($limit);
+        }
+        return $builder->get();
     }
 
     public function getRecentPosts(int $limit = 5): array
