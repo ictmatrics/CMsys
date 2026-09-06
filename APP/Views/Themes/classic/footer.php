@@ -41,7 +41,7 @@ $custom_js_footer  = $custom_js_footer ?? '';
                     &copy; <?= date('Y') ?> {{ $site_title }}. All rights reserved.
                 </div>
                 <div class="col-md-6 text-center text-md-end small">
-                    <span class="text-muted">Powered by <a href="#" class="text-white">CMsys</a> &amp; ICTM Framework</span>
+                    <span class="text-muted">Powered by <a href="https://framework.ictmatrics.com" > ICTM Framework</a></span>
                 </div>
             </div>
         </div>
@@ -50,7 +50,11 @@ $custom_js_footer  = $custom_js_footer ?? '';
     <!-- Core Scripts -->
     <script src="{{ pathto('js/jquery3.7.1.min.js') }}"></script>
     <script src="{{ pathto('js/bootstrap5.3.8.bundle.min.js') }}"></script>
-    
+    <!-- Load Classic theme script -->
+    <script>
+        <?php echo file_get_contents(APPPATH . 'Views/Themes/classic/classic.js'); ?>
+    </script>
+
     {{ $custom_js_footer }}
     <?php do_action('wp_footer'); ?>
 </body>

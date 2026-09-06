@@ -21,7 +21,7 @@
                 <header class="mb-4">
                     <h1 class="display-5 font-weight-bold text-dark">{{ htmlspecialchars($post->title, ENT_QUOTES, 'UTF-8') }}</h1>
                     <div class="text-muted small my-3 d-flex flex-wrap align-items-center gap-3">
-                        <span><i class="fa-solid fa-calendar me-2"></i> {{ date('M d, Y', strtotime($post->created_at)) }}</span>
+                        <span><i class="fa-solid fa-calendar me-2"></i> {{ date('M d, Y', strtotime(!empty($post->publish_date) ? $post->publish_date : $post->created_at)) }}</span>
                         <?php if (!empty($post_categories)) { ?>
                             <span>
                                 <i class="fa-solid fa-folder me-2 text-primary"></i>

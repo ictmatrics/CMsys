@@ -135,10 +135,30 @@ function confirmto(string $message = '', string $path = '', string $returnpath =
  */
 function getUserIP(): string
 {
-    if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-        [$ip] = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
-        return trim($ip);
+    // Priority order of headers used by common load balancers/CDNs
+    $headers = [
+        'HTTP_CF_CONNECTING_IP',  // Cloudflare
+        'HTTP_X_REAL_IP',         // Nginx / general reverse proxy
+        'HTTP_CLIENT_IP',         // Some ISP proxies
+        'HTTP_X_FORWARDED_FOR'    // Standard multi-proxy header
+    ];
+
+    foreach ($headers as $header) {
+        if (!empty($_SERVER[$header])) {
+            // X-Forwarded-For can contain a comma-separated list (client, proxy1, proxy2)
+            $ips = explode(',', $_SERVER[$header]);
+
+            foreach ($ips as $ip) {
+                $ip = trim($ip);
+
+                // Filter out invalid IPs and local/private range IPs (127.0.0.1, 192.168.x.x, etc.)
+                if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+                    return $ip;
+                }
+            }
+        }
     }
 
+    // Fallback to the direct connection IP
     return $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
 }

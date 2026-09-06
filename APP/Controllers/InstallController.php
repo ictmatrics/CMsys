@@ -74,6 +74,9 @@ class InstallController extends Controller
                     `author_id` INT NULL,
                     `parent_id` INT NULL,
                     `template` VARCHAR(255) NULL,
+                    `views` INT DEFAULT 0 NOT NULL,
+                    `is_trending` TINYINT DEFAULT 0 NOT NULL,
+                    `related_posts` TEXT NULL,
                     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                     FOREIGN KEY (`author_id`) REFERENCES `users`(`id`) ON DELETE SET NULL

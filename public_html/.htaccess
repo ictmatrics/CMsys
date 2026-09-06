@@ -1,9 +1,18 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteBase /
+    
+    # 1. Explicitly state the base folder FOR THIS SPECIFIC DIRECTORY
+    # This is usually what fixes the 404 error.
+    RewriteBase /public_html/
 
-    # Redirect all requests to the index.php file
+    # 2. Pass Authorization header (Optional but recommended)
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # 3. Ignore existing files and directories
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule  ^(.+)$ index.php/$1 [QSA,L]
+    
+    # 4. Route everything else to index.php
+    RewriteRule ^(.*)$ index.php/$1 [QSA,L]
 </IfModule>

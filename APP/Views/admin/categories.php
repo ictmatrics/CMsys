@@ -53,7 +53,7 @@
                                     <td><span class="font-monospace text-muted">{{ htmlspecialchars($cat['slug'], ENT_QUOTES, 'UTF-8') }}</span></td>
                                     <td class="text-end">
                                         <button class="btn btn-sm btn-outline-primary btn-edit" data-id="{{ $cat['id'] }}" data-name="{{ htmlspecialchars($cat['name'], ENT_QUOTES, 'UTF-8') }}" data-slug="{{ htmlspecialchars($cat['slug'], ENT_QUOTES, 'UTF-8') }}"><i class="fa-solid fa-pen-to-square"></i></button>
-                                        <button class="btn btn-sm btn-outline-danger delete" data-id="{{ $cat['id'] }}" data-action="delete"><i class="fa-solid fa-trash-can"></i></button>
+                                        <button class="btn btn-sm btn-outline-danger delete" data-id="{{ $cat['id'] }}" data-action="delete" data-url="{{ pathto('admin/category/delete') }}"><i class="fa-solid fa-trash-can"></i></button>
                                     </td>
                                 </tr>
                             <?php } ?>

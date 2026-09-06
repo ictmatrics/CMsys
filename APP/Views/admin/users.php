@@ -96,7 +96,7 @@
                                                 data-role="{{ $user['role'] }}"
                                                 data-status="{{ $user['status'] }}"><i class="fa-solid fa-pen-to-square"></i></button>
                                         <?php if ((int)$user['id'] !== $_SESSION['ICTM_Auth']['user_id']) { ?>
-                                            <button class="btn btn-sm btn-outline-danger delete" data-id="{{ $user['id'] }}" data-action="delete"><i class="fa-solid fa-trash-can"></i></button>
+                                            <button class="btn btn-sm btn-outline-danger delete" data-id="{{ $user['id'] }}" data-action="delete" data-url="{{ pathto('admin/user/delete') }}"><i class="fa-solid fa-trash-can"></i></button>
                                         <?php } ?>
                                     </td>
                                 </tr>

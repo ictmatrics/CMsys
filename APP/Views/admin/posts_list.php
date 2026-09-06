@@ -8,7 +8,7 @@
     
     <div class="card-body card-custom-body">
         <div class="table-responsive">
-            <table class="table table-hover align-middle datatable">
+            <table class="table table-hover align-middle datatable" data-order='[[0, "desc"]]'>
                 <thead class="table-light">
                     <tr>
                         <th width="5%">ID</th>
@@ -39,7 +39,7 @@
                             </td>
                             <td class="text-end">
                                 <a href="{{ pathto('admin/post/edit/' . $post['id']) }}" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-pen-to-square"></i></a>
-                                <button class="btn btn-sm btn-outline-danger delete" data-id="{{ $post['id'] }}" data-action="delete"><i class="fa-solid fa-trash-can"></i></button>
+                                <button class="btn btn-sm btn-outline-danger delete" data-id="{{ $post['id'] }}" data-action="delete" data-url="{{ pathto('admin/post/delete') }}"><i class="fa-solid fa-trash-can"></i></button>
                             </td>
                         </tr>
                     <?php } ?>

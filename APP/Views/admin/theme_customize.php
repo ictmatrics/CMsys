@@ -1,3 +1,14 @@
+<?php
+if ($theme_name === 'codies') {
+    echo $this->view('Themes/codies/customizer', [
+        'theme_name' => $theme_name,
+        'config' => $config,
+        'posts_list' => $posts_list ?? [],
+        'categories_list' => $categories_list ?? []
+    ]);
+    return;
+}
+?>
 {{ $this->view('admin/layout/header', ['title' => $title]) }}
 
 <div class="container-fluid px-4 py-3">

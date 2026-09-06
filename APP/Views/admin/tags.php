@@ -53,7 +53,7 @@
                                     <td><span class="font-monospace text-muted">{{ htmlspecialchars($tag['slug'], ENT_QUOTES, 'UTF-8') }}</span></td>
                                     <td class="text-end">
                                         <button class="btn btn-sm btn-outline-primary btn-edit" data-id="{{ $tag['id'] }}" data-name="{{ htmlspecialchars($tag['name'], ENT_QUOTES, 'UTF-8') }}" data-slug="{{ htmlspecialchars($tag['slug'], ENT_QUOTES, 'UTF-8') }}"><i class="fa-solid fa-pen-to-square"></i></button>
-                                        <button class="btn btn-sm btn-outline-danger delete" data-id="{{ $tag['id'] }}" data-action="delete"><i class="fa-solid fa-trash-can"></i></button>
+                                        <button class="btn btn-sm btn-outline-danger delete" data-id="{{ $tag['id'] }}" data-action="delete" data-url="{{ pathto('admin/tag/delete') }}"><i class="fa-solid fa-trash-can"></i></button>
                                     </td>
                                 </tr>
                             <?php } ?>

@@ -181,6 +181,20 @@ function chooseImageFromLibrary(targetFieldId, filterType = 'all') {
                       <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                   </div>
                   <div class="modal-body p-4" style="max-height: 500px; overflow-y: auto;">
+                      <!-- Drag & Drop Zone -->
+                      <div id="mediaModalDropzone" class="border border-2 border-primary border-dashed rounded-3 p-4 mb-3 text-center bg-light position-relative" style="border-style: dashed !important; transition: all 0.3s ease; cursor: pointer;">
+                          <input type="file" id="mediaModalFileField" class="position-absolute top-0 start-0 w-100 h-100 opacity-0" style="cursor: pointer; z-index: 10;">
+                          <div class="dropzone-prompt">
+                              <i class="fa-solid fa-cloud-arrow-up fa-2x text-primary mb-2"></i>
+                              <p class="mb-1 fw-bold text-secondary">Drag and drop file here, or click to select</p>
+                              <span class="text-muted small">Supports JPG, PNG, GIF, WEBP, MP4, PDF</span>
+                          </div>
+                          <div class="dropzone-loading d-none">
+                              <div class="spinner-border text-primary spinner-border-sm me-2" role="status"></div>
+                              <span class="text-secondary small fw-bold">Uploading file...</span>
+                          </div>
+                      </div>
+
                       <div class="row row-cols-2 row-cols-md-4 g-3" id="modalMediaList"></div>
                   </div>
               </div>
@@ -320,5 +334,131 @@ $(document).on('click', '.btn-clear-media', function (e) {
     $('#' + targetId).val('');
     $('#' + targetId + '_preview').attr('src', '').hide();
     $('#' + targetId + '_placeholder').show();
+  }
+});
+
+// Drag/drop upload handlers
+function uploadMediaFile(file) {
+  if (!file) return;
+
+  const dropzone = $('#mediaModalDropzone');
+  const prompt = dropzone.find('.dropzone-prompt');
+  const loading = dropzone.find('.dropzone-loading');
+
+  prompt.addClass('d-none');
+  loading.removeClass('d-none');
+
+  const data = new FormData();
+  data.append("file", file);
+
+  const uploadUrl = (window.BASE_URL || '') + 'admin/media/upload';
+  $.ajax({
+      url: uploadUrl,
+      type: 'POST',
+      data: data,
+      cache: false,
+      contentType: false,
+      processData: false,
+      dataType: 'json',
+      success: function(res) {
+          prompt.removeClass('d-none');
+          loading.addClass('d-none');
+          
+          if (res.status === 'success') {
+              const fullUrl = res.url;
+              const targetId = window._mediaTarget;
+              
+              if (targetId) {
+                  if (targetId === 'summernote') {
+                      const context = window._activeSummernoteContext;
+                      if (context) {
+                          const isVideo = file.type && file.type.startsWith('video/');
+                          let html = isVideo
+                              ? `<video src="${fullUrl}" controls style="max-width: 100%; display: block; margin: 10px 0;"></video>`
+                              : `<img src="${fullUrl}" class="img-fluid" style="max-width: 100%; display: block; margin: 10px 0;" />`;
+                          context.invoke('editor.pasteHTML', html);
+                      }
+                  } else {
+                      const baseUrl = window.BASE_URL || '';
+                      const cleanedPath = (baseUrl && fullUrl.startsWith(baseUrl))
+                          ? fullUrl.slice(baseUrl.length).replace(/^\/+/, '')
+                          : fullUrl;
+
+                      $('#' + targetId).val(cleanedPath);
+                      $('#' + targetId + '_preview').attr('src', fullUrl).show();
+                      $('#' + targetId + '_placeholder').hide();
+                  }
+                  
+                  const modalEl = document.getElementById('mediaSelectModal');
+                  if (modalEl) {
+                      const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                      if (modalInstance) { modalInstance.hide(); }
+                  }
+                  
+                  $('#' + targetId).trigger('input');
+              }
+          } else {
+              alert("Upload failed: " + res.message);
+          }
+      },
+      error: function() {
+          prompt.removeClass('d-none');
+          loading.addClass('d-none');
+          alert("Network / Server error during file upload");
+      }
+  });
+}
+
+$(document).on('change', '#mediaModalFileField', function(e) {
+  const file = e.target.files[0];
+  uploadMediaFile(file);
+});
+
+$(document).on('dragenter dragover', '#mediaModalDropzone', function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  $(this).addClass('bg-primary-subtle border-primary-emphasis').css('transform', 'scale(1.01)');
+});
+
+$(document).on('dragleave', '#mediaModalDropzone', function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  $(this).removeClass('bg-primary-subtle border-primary-emphasis').css('transform', 'none');
+});
+
+$(document).on('drop', '#mediaModalDropzone', function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  $(this).removeClass('bg-primary-subtle border-primary-emphasis').css('transform', 'none');
+  
+  const files = e.originalEvent?.dataTransfer?.files || e.dataTransfer?.files;
+  if (files && files.length > 0) {
+    uploadMediaFile(files[0]);
+  }
+});
+
+/* ====== Theme Mode Switching Controller (Light, Dark, Sepia) ====== */
+$(document).on('click', '[data-theme]', function(e) {
+  e.preventDefault();
+  const theme = $(this).data('theme');
+  $('[data-theme]').removeClass('active');
+  $(`[data-theme="${theme}"]`).addClass('active');
+
+  $('body').removeClass('theme-light theme-dark theme-sepia').addClass(`theme-${theme}`);
+  
+  // Persist preference across pages
+  localStorage.setItem('codies_theme_mode', theme);
+  
+  if (typeof triggerToast === 'function') {
+    triggerToast(`Visual environment set to: ${theme.toUpperCase()}`);
+  }
+});
+
+// Synchronize button active states on page load
+$(function() {
+  const savedTheme = localStorage.getItem('codies_theme_mode');
+  if (savedTheme) {
+    $('[data-theme]').removeClass('active');
+    $(`[data-theme="${savedTheme}"]`).addClass('active');
   }
 });

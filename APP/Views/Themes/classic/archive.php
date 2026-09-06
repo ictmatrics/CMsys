@@ -49,7 +49,7 @@
                                         <a href="{{ pathto($post['slug']) }}" class="text-decoration-none text-dark">{{ htmlspecialchars($post['title'], ENT_QUOTES, 'UTF-8') }}</a>
                                     </h3>
                                     <p class="text-muted small mb-3">
-                                        <i class="fa-solid fa-calendar me-2"></i> {{ date('M d, Y', strtotime($post['created_at'])) }}
+                                        <i class="fa-solid fa-calendar me-2"></i> {{ date('M d, Y', strtotime(!empty($post['publish_date']) ? $post['publish_date'] : $post['created_at'])) }}
                                     </p>
                                     <p class="card-text mb-4">
                                         {{ htmlspecialchars($post['excerpt'] ?? substr(strip_tags($post['content']), 0, 150) . '...', ENT_QUOTES, 'UTF-8') }}

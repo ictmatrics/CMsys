@@ -33,7 +33,7 @@
                             </td>
                             <td class="text-end">
                                 <a href="{{ pathto('admin/cpt/entry/edit/' . $cpt['name'] . '/' . $item['id']) }}" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-pen-to-square"></i></a>
-                                <button class="btn btn-sm btn-outline-danger delete" data-id="{{ $item['id'] }}" data-action="delete"><i class="fa-solid fa-trash-can"></i></button>
+                                <button class="btn btn-sm btn-outline-danger delete" data-id="{{ $item['id'] }}" data-action="delete" data-url="{{ pathto('admin/cpt/entry/delete') }}"><i class="fa-solid fa-trash-can"></i></button>
                             </td>
                         </tr>
                     <?php } ?>

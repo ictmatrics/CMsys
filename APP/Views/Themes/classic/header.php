@@ -42,94 +42,17 @@ $is_sticky = !empty($theme_config['sticky_header']) ? 'sticky-top' : '';
     <!-- FontAwesome & Fonts -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
     <style>
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #fafbfe;
-            color: #2d3748;
-        }
-        .text-primary {
-            color: {{ $primary_color }} !important;
-        }
-        .btn-primary {
-            background-color: {{ $primary_color }} !important;
-            border-color: {{ $primary_color }} !important;
-        }
-        .btn-outline-primary {
-            color: {{ $primary_color }} !important;
-            border-color: {{ $primary_color }} !important;
-        }
-        .btn-outline-primary:hover {
-            background-color: {{ $primary_color }} !important;
-            color: #fff !important;
-        }
-        .navbar-frontend {
-            background-color: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid #f0f0f0;
-            padding: 18px 0;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.01);
-        }
-        .navbar-brand {
-            font-weight: 800;
-            font-size: 24px;
-            color: {{ $secondary_color }} !important;
-        }
-        .nav-link {
-            font-weight: 600;
-            color: #4a5568 !important;
-            padding: 8px 16px !important;
-        }
-        .nav-link:hover {
-            color: {{ $primary_color }} !important;
-        }
-        .hero-banner {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            padding: 100px 0;
-            border-bottom: 1px solid #e2e8f0;
-            margin-bottom: 60px;
-        }
-        .card-post {
-            border: none;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.02);
-            transition: all 0.3s ease;
-            background: #fff;
-            margin-bottom: 40px;
-        }
-        .card-post:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.05);
-        }
-        .widget-card {
-            border: none;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.02);
-            background: #fff;
-            padding: 24px;
-            margin-bottom: 30px;
-        }
-        .widget-title {
-            font-weight: 700;
-            font-size: 18px;
-            border-bottom: 2px solid #2b7bf5;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-        }
-        footer {
-            background-color: #1a202c;
-            color: #a0aec0;
-            padding: 60px 0 30px 0;
-            margin-top: 80px;
-        }
-        footer a {
-            color: #cbd5e0;
-            text-decoration: none;
-        }
-        footer a:hover {
-            color: #fff;
-        }
+        /* Load dynamic Classic theme stylesheet */
+        <?php
+        $classic_css = file_get_contents(APPPATH . 'Views/Themes/classic/classic.css');
+        echo str_replace(
+            ['{{ $primary_color }}', '{{ $secondary_color }}'],
+            [$primary_color, $secondary_color],
+            $classic_css
+        );
+        ?>
+
         /* Custom SEO scripts & header tags style injection */
         {{ $custom_css }}
         

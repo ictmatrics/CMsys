@@ -1,5 +1,12 @@
 <IfModule mod_rewrite.c>
-  RewriteEngine on
-  RewriteRule ^$ public_html/ [L]
-  RewriteRule (.*) public_html/$1 [L]
+    RewriteEngine On
+    
+    # Uncomment and change to your exact folder name ONLY if you still get errors
+    RewriteBase /
+    
+    # Prevent infinite loops: don't rewrite if the request already points to public_html/
+    RewriteCond %{REQUEST_URI} !/public_html/
+    
+    # Route all requests (including the root) to the public_html folder
+    RewriteRule ^(.*)$ public_html/$1 [L]
 </IfModule>

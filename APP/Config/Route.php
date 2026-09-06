@@ -114,3 +114,4 @@ $router->post('/admin/import', 'AdminController@importDatabase');
 
 // AJAX API Endpoint
 $router->post('/admin/api/update-status', 'AdminController@updateStatusApi');
+

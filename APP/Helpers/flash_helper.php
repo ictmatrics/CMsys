@@ -29,8 +29,8 @@ function flash(
         $class    = $_SESSION[$name . '_class'] ?? 'alert alert-success';
         $position = $_SESSION[$name . '_position'] ?? 'top-right';
 
-        // Base style (no margin, no gap)
-        $style = "position:fixed; z-index:1050; padding:10px 15px; margin:0;";
+        // Base style with smooth transitions and subtle shadow
+        $style = "position:fixed; z-index:1090; padding:12px 20px; margin:15px; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.15); transition: opacity 0.4s ease, transform 0.4s ease; display:flex; align-items:center; gap:12px;";
 
         $style .= match ($position) {
             'top-right'     => "top:0; right:0;",
@@ -44,11 +44,46 @@ function flash(
             default         => "top:0; right:0;",
         };
 
-        echo '<div class="' . htmlspecialchars($class, ENT_QUOTES, 'UTF-8') . '" 
-                 id="msg-flash" 
-                 style="' . $style . '">' 
-             . htmlspecialchars((string)$_SESSION[$name], ENT_QUOTES, 'UTF-8') 
-             . '</div>';
+        $flashId = 'msg-flash-' . uniqid();
+        $msgText = htmlspecialchars((string)$_SESSION[$name], ENT_QUOTES, 'UTF-8');
+        $fullClass = htmlspecialchars($class, ENT_QUOTES, 'UTF-8');
+
+        echo <<<HTML
+        <div class="{$fullClass} alert-dismissible fade show" id="{$flashId}" style="{$style}" role="alert">
+            <span>{$msgText}</span>
+            <button type="button" class="btn-close" style="padding: 0; margin-left: 8px; font-size: 0.8rem;" onclick="dismissFlashAlert('{$flashId}')" aria-label="Close"></button>
+        </div>
+        <script>
+            (function() {
+                function initFlashAutoDismiss() {
+                    const el = document.getElementById('{$flashId}');
+                    if (!el) return;
+                    setTimeout(function() {
+                        dismissFlashAlert('{$flashId}');
+                    }, 3000);
+                }
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', initFlashAutoDismiss);
+                } else {
+                    initFlashAutoDismiss();
+                }
+            })();
+            if (typeof window.dismissFlashAlert !== 'function') {
+                window.dismissFlashAlert = function(id) {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.style.opacity = '0';
+                        el.style.transform = (el.style.transform || '') + ' scale(0.95)';
+                        setTimeout(function() {
+                            if (el && el.parentNode) {
+                                el.parentNode.removeChild(el);
+                            }
+                        }, 400);
+                    }
+                };
+            }
+        </script>
+        HTML;
 
         // Clear session
         unset($_SESSION[$name], $_SESSION[$name . '_class'], $_SESSION[$name . '_position']);

@@ -64,7 +64,7 @@
                         <?php } ?>
                         <div class="card-body p-4 p-md-5">
                             <div class="mb-3 d-flex align-items-center text-muted small fw-semibold">
-                                <span><i class="fa-regular fa-calendar me-2"></i>{{ date('M d, Y', strtotime($post['created_at'])) }}</span>
+                                <span><i class="fa-regular fa-calendar me-2"></i>{{ date('M d, Y', strtotime(!empty($post['publish_date']) ? $post['publish_date'] : $post['created_at'])) }}</span>
                                 <span class="mx-2 text-primary">•</span>
                                 <span><i class="fa-regular fa-clock me-2"></i>{{ $readingTime }} min read</span>
                             </div>

@@ -1,0 +1,12 @@
+/* Customizer & Editor Overrides */
+
+/* Ensure Summernote Fullscreen / Full Page view background is 100% opaque */
+.note-editor.note-frame.fullscreen {
+    background-color: #ffffff !important;
+    z-index: 10500 !important;
+}
+
+.note-editor.note-frame.fullscreen .note-editable {
+    background-color: #ffffff !important;
+    color: #1e293b !important;
+}

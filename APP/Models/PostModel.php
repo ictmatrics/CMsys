@@ -13,6 +13,30 @@ class PostModel extends Model
     public function __construct()
     {
         parent::__construct();
+        $this->migrateSchema();
+    }
+
+    private function migrateSchema(): void
+    {
+        try {
+            $tables = $this->db->query("SHOW TABLES LIKE '{$this->table}'");
+            if (!empty($tables)) {
+                $columns = $this->db->query("SHOW COLUMNS FROM `{$this->table}`");
+                $existing = array_column($columns, 'Field');
+                
+                if (!in_array('views', $existing, true)) {
+                    $this->db->query("ALTER TABLE `{$this->table}` ADD COLUMN `views` INT DEFAULT 0 NOT NULL");
+                }
+                if (!in_array('is_trending', $existing, true)) {
+                    $this->db->query("ALTER TABLE `{$this->table}` ADD COLUMN `is_trending` TINYINT DEFAULT 0 NOT NULL");
+                }
+                if (!in_array('related_posts', $existing, true)) {
+                    $this->db->query("ALTER TABLE `{$this->table}` ADD COLUMN `related_posts` TEXT NULL");
+                }
+            }
+        } catch (\Throwable $e) {
+            // Silence migration errors to prevent installer/setup crashes
+        }
     }
 
     public function generateSlug(string $title, string $type = 'post', int $excludeId = 0): string
@@ -137,29 +161,23 @@ class PostModel extends Model
     public function savePostMeta(int $postId, array $meta): void
     {
         foreach ($meta as $key => $value) {
-            $existing = $this->find_single($this->metaTable, null, '', [
-                ['post_id', '=', $postId],
-                ['meta_key', '=', $key]
-            ]);
-            if ($existing) {
-                $this->update($this->metaTable, ['meta_value' => (string)$value], (int)$existing->id);
+            $existing = $this->db->query("SELECT id FROM {$this->metaTable} WHERE post_id = ? AND meta_key = ?", [$postId, $key]);
+            if (!empty($existing)) {
+                $this->db->query("UPDATE {$this->metaTable} SET meta_value = ? WHERE id = ?", [(string)$value, (int)$existing[0]['id']]);
             } else {
-                $this->insert($this->metaTable, [
-                    'post_id' => $postId,
-                    'meta_key' => $key,
-                    'meta_value' => (string)$value
-                ]);
+                $this->db->query("INSERT INTO {$this->metaTable} (post_id, meta_key, meta_value) VALUES (?, ?, ?)", [$postId, $key, (string)$value]);
             }
         }
     }
 
-    public function getAllPosts(string $type = 'post', string $status = ''): array
+    public function getAllPosts(string $type = 'post', string $status = '', string $orderBy = 'id', string $orderDir = 'DESC'): array
     {
-        $params = [['type', '=', $type]];
+        $builder = $this->db->table($this->table)
+                            ->where('type', '=', $type);
         if (!empty($status)) {
-            $params[] = ['status', '=', $status];
+            $builder->where('status', '=', $status);
         }
-        return $this->find_all($this->table, '', $params);
+        return $builder->orderBy($orderBy, $orderDir)->get();
     }
 
     public function getRecentPublishedPosts(int $limit = 5): array
@@ -208,5 +226,46 @@ class PostModel extends Model
                   WHERE pt.taxonomy_id = ? AND p.status = 'published' 
                   ORDER BY p.created_at DESC";
         return $this->db->query($query, [$taxonomyId]);
+    }
+
+    public function incrementViews(int $postId): void
+    {
+        $this->db->query("UPDATE {$this->table} SET views = views + 1 WHERE id = ?", [$postId]);
+    }
+
+    public function getTrendingPosts(int $limit = 5): array
+    {
+        $posts = $this->getPublishedPosts();
+        $scoredPosts = [];
+        $gravity = 1.8;
+        
+        foreach ($posts as $post) {
+            $postId = (int)(is_object($post) ? ($post->id ?? 0) : ($post['id'] ?? 0));
+            $postViews = (int)(is_object($post) ? ($post->views ?? 0) : ($post['views'] ?? 0));
+            $createdAt = is_object($post) ? ($post->created_at ?? '') : ($post['created_at'] ?? '');
+            
+            $timeSinceCreated = (time() - strtotime($createdAt)) / 3600;
+            if ($timeSinceCreated < 0) {
+                $timeSinceCreated = 0;
+            }
+            
+            $score = $postViews / pow(($timeSinceCreated + 2), $gravity);
+            
+            if (is_object($post)) {
+                $post->trend_score = $score;
+                $scoredPosts[] = $post;
+            } else {
+                $post['trend_score'] = $score;
+                $scoredPosts[] = $post;
+            }
+        }
+        
+        usort($scoredPosts, function ($a, $b) {
+            $scoreA = is_object($a) ? $a->trend_score : $a['trend_score'];
+            $scoreB = is_object($b) ? $b->trend_score : $b['trend_score'];
+            return $scoreB <=> $scoreA;
+        });
+        
+        return array_slice($scoredPosts, 0, $limit);
     }
 }

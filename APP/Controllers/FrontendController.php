@@ -43,15 +43,19 @@ class FrontendController extends Controller
 
         // 2. Widget settings & data
         $widgetJson = $this->optionModel->getOption('widget_settings', '{"sidebar_widgets":[],"sidebar_layout":"right"}');
-        $widgetSettings = json_decode($widgetJson, true);
+        $widgetSettings = json_decode($widgetJson, true) ?: [];
+        $recentLimit = (int)($widgetSettings['recent_posts_limit'] ?? 5);
+        $trendingLimit = (int)($widgetSettings['trending_posts_limit'] ?? 5);
 
         $categories = $this->taxonomyModel->getAllTaxonomies('category');
         $tags = $this->taxonomyModel->getAllTaxonomies('tag');
-        $recentPosts = $this->postModel->getRecentPublishedPosts(5);
+        $recentPosts = $this->postModel->getRecentPublishedPosts($recentLimit > 0 ? $recentLimit : 5);
+        $trendingPosts = $this->postModel->getTrendingPosts($trendingLimit > 0 ? $trendingLimit : 5);
         $pages = $this->postModel->getPublishedPages();
 
         $themeConfigJson = $this->optionModel->getOption("theme_{$theme}_config", '{}');
         $themeConfig = json_decode($themeConfigJson, true) ?: [];
+
 
         return [
             'theme_name' => $theme,
@@ -71,6 +75,7 @@ class FrontendController extends Controller
             'widget_categories' => $categories,
             'widget_tags' => $tags,
             'widget_recent_posts' => $recentPosts,
+            'widget_trending_posts' => $trendingPosts,
             'widget_pages' => $pages
         ];
     }
@@ -98,6 +103,10 @@ class FrontendController extends Controller
             redirect('404.php');
             exit();
         }
+
+        // Increment views
+        $this->postModel->incrementViews((int)$post->id);
+        $post->views = ((int)($post->views ?? 0)) + 1;
 
         $categories = $this->taxonomyModel->getPostTaxonomies((int)$post->id, 'category');
         $tags = $this->taxonomyModel->getPostTaxonomies((int)$post->id, 'tag');
@@ -169,6 +178,10 @@ class FrontendController extends Controller
         // 1. Try finding a post with this slug
         $post = $this->postModel->getPostBySlug($slug, 'post');
         if ($post && $this->isAuthorized($post)) {
+            // Increment views
+            $this->postModel->incrementViews((int)$post->id);
+            $post->views = ((int)($post->views ?? 0)) + 1;
+
             $categories = $this->taxonomyModel->getPostTaxonomies((int)$post->id, 'category');
             $tags = $this->taxonomyModel->getPostTaxonomies((int)$post->id, 'tag');
             $comments = $this->commentModel->getCommentsByPost((int)$post->id, 'approved');
@@ -210,8 +223,8 @@ class FrontendController extends Controller
             }
 
             // Block-builder blocks integration
-            $blocksJson = $this->postModel->getSingleMeta((int)$page->id, 'page_blocks', '[]');
-            $blocks = json_decode($blocksJson, true);
+            $blocksJson = $this->postModel->getSingleMeta((int)$page->id, 'page_blocks', '');
+            $blocks = !empty($blocksJson) ? json_decode($blocksJson, true) : [];
 
             if (function_exists('apply_filters')) {
                 $page->content = apply_filters('the_content', $page->content);

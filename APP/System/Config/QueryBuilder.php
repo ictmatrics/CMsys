@@ -36,6 +36,11 @@ class QueryBuilder
         $this->conn->set_charset("utf8mb4");
     }
 
+    public function getLastInsertId(): int
+    {
+        return (int)$this->conn->insert_id;
+    }
+
     /* ------------------ TRANSACTIONS ------------------ */
     public function beginTransaction(): bool { return $this->conn->begin_transaction(); }
     public function commit(): bool { return $this->conn->commit(); }
@@ -80,7 +85,7 @@ class QueryBuilder
      * where([['col1', '=', 1], ['col2', '>', 5]])
      * where('col', 1) // defaults to '='
      */
-    public function where(string|array $column, string $operator = null, mixed $value = null): self
+    public function where(string|array $column, ?string $operator = null, mixed $value = null): self
     {
         if (is_array($column)) {
             foreach ($column as $cond) {

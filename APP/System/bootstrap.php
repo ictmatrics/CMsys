@@ -71,11 +71,18 @@ $router = new Router();
 // Load the route definitions.
 require_once APPPATH . 'Config/Route.php';
 
-// Get the requested URI and HTTP method.
-// We explicitly handle the return value of parse_url(), which can be false
-// for malformed URIs, ensuring we always pass a string to the router.
 $requestUri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 $requestUri = is_string($requestUri) ? $requestUri : '/';
+
+// Strip the subdirectory path from the request URI for correct routing in subdirectories
+$basePath = parse_url(BASE_URL, PHP_URL_PATH);
+if (is_string($basePath)) {
+    $basePath = rtrim($basePath, '/');
+    if ($basePath !== '' && ($requestUri === $basePath || strpos($requestUri, $basePath . '/') === 0)) {
+        $requestUri = substr($requestUri, strlen($basePath));
+    }
+}
+
 $requestMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
 try {

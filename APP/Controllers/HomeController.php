@@ -41,15 +41,19 @@ class HomeController extends Controller
 
         // Widgets
         $widgetJson = $this->optionModel->getOption('widget_settings', '{"sidebar_widgets":[],"sidebar_layout":"right"}');
-        $widgetSettings = json_decode($widgetJson, true);
+        $widgetSettings = json_decode($widgetJson, true) ?: [];
+        $recentLimit = (int)($widgetSettings['recent_posts_limit'] ?? 5);
+        $trendingLimit = (int)($widgetSettings['trending_posts_limit'] ?? 5);
 
         $categories = $this->taxonomyModel->getAllTaxonomies('category');
         $tags = $this->taxonomyModel->getAllTaxonomies('tag');
-        $recentPosts = $this->postModel->getRecentPublishedPosts(5);
+        $recentPosts = $this->postModel->getRecentPublishedPosts($recentLimit > 0 ? $recentLimit : 5);
+        $trendingPosts = $this->postModel->getTrendingPosts($trendingLimit > 0 ? $trendingLimit : 5);
         $pages = $this->postModel->getPublishedPages();
 
         $themeConfigJson = $this->optionModel->getOption("theme_{$theme}_config", '{}');
         $themeConfig = json_decode($themeConfigJson, true) ?: [];
+
 
         return [
             'theme_name' => $theme,
@@ -69,6 +73,7 @@ class HomeController extends Controller
             'widget_categories' => $categories,
             'widget_tags' => $tags,
             'widget_recent_posts' => $recentPosts,
+            'widget_trending_posts' => $trendingPosts,
             'widget_pages' => $pages
         ];
     }
@@ -95,12 +100,12 @@ class HomeController extends Controller
             if ($pageId > 0) {
                 $page = $this->postModel->getPostById($pageId);
                 if ($page && $page->status === 'published') {
-                    $blocksJson = $this->postModel->getSingleMeta((int)$page->id, 'page_blocks', '[]');
-                    $blocks = json_decode($blocksJson, true);
+                    $blocksJson = $this->postModel->getSingleMeta((int)$page->id, 'page_blocks', '');
+                    $blocks = !empty($blocksJson) ? json_decode($blocksJson, true) : [];
 
                     $data = array_merge($data, [
                         'page' => $page,
-                        'blocks' => $blocks,
+                        'blocks' => $blocks ?: [],
                         'title' => $page->title
                     ]);
 

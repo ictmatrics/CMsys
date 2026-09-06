@@ -95,3 +95,5 @@ function fpercent(
 ): string {
     return format_number($n, $decimals, $decimalSeparator, $thousandsSeparator) . '%';
 }
+
+

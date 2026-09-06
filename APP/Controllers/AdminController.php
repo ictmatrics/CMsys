@@ -196,7 +196,7 @@ class AdminController extends Controller
         echo $this->view('admin/posts_list', ['title' => 'Manage Posts', 'posts' => $posts]);
     }
 
-    public function postForm(string $id = null)
+    public function postForm(?string $id = null)
     {
         $post = null;
         $meta = [];
@@ -205,11 +205,13 @@ class AdminController extends Controller
 
         if ($id !== null) {
             $post = $this->postModel->getPostById((int)$id);
-            if ($post) {
-                $meta = $post->meta;
-                $postCategories = array_map(fn($c) => (int)$c['id'], $this->taxonomyModel->getPostTaxonomies((int)$id, 'category'));
-                $postTags = array_map(fn($t) => $t['name'], $this->taxonomyModel->getPostTaxonomies((int)$id, 'tag'));
+            if (!$post || $post->type !== 'post') {
+                redirect('admin/posts');
+                exit();
             }
+            $meta = $post->meta;
+            $postCategories = array_map(fn($c) => (int)$c['id'], $this->taxonomyModel->getPostTaxonomies((int)$id, 'category'));
+            $postTags = array_map(fn($t) => $t['name'], $this->taxonomyModel->getPostTaxonomies((int)$id, 'tag'));
         }
 
         $categories = $this->taxonomyModel->getAllTaxonomies('category');
@@ -307,16 +309,18 @@ class AdminController extends Controller
         echo $this->view('admin/pages_list', ['title' => 'Manage Pages', 'pages' => $pages]);
     }
 
-    public function pageForm(string $id = null)
+    public function pageForm(?string $id = null)
     {
         $page = null;
         $meta = [];
 
         if ($id !== null) {
             $page = $this->postModel->getPostById((int)$id);
-            if ($page) {
-                $meta = $page->meta;
+            if (!$page || $page->type !== 'page') {
+                redirect('admin/pages');
+                exit();
             }
+            $meta = $page->meta;
         }
 
         $data = [
@@ -658,10 +662,27 @@ class AdminController extends Controller
 
         $layout = validate_data($_POST['sidebar_layout'] ?? 'right');
         $widgets = $_POST['widgets'] ?? [];
+        $order = $_POST['widgets_order'] ?? [];
+
+        $orderedActiveWidgets = [];
+        foreach ($order as $key) {
+            $key = validate_data($key);
+            if (in_array($key, $widgets, true)) {
+                $orderedActiveWidgets[] = $key;
+            }
+        }
+        if (empty($orderedActiveWidgets)) {
+            $orderedActiveWidgets = $widgets;
+        }
+
+        $recent_limit = (int)($_POST['recent_posts_limit'] ?? 5);
+        $trending_limit = (int)($_POST['trending_posts_limit'] ?? 5);
 
         $settings = [
             'sidebar_layout' => $layout,
-            'sidebar_widgets' => $widgets
+            'sidebar_widgets' => $orderedActiveWidgets,
+            'recent_posts_limit' => $recent_limit,
+            'trending_posts_limit' => $trending_limit
         ];
 
         $this->optionModel->updateOption('widget_settings', json_encode($settings));
@@ -1017,7 +1038,7 @@ class AdminController extends Controller
         ]);
     }
 
-    public function cptEntryForm(string $type, string $id = null)
+    public function cptEntryForm(string $type, ?string $id = null)
     {
         $type = validate_data($type);
         $cptsJson = $this->optionModel->getOption('custom_post_types', '[]');
@@ -1032,9 +1053,11 @@ class AdminController extends Controller
         $meta = [];
         if ($id !== null) {
             $entry = $this->postModel->getPostById((int)$id);
-            if ($entry) {
-                $meta = $entry->meta;
+            if (!$entry || $entry->type !== $type) {
+                redirect('admin/cpt/entries/' . $type);
+                exit();
             }
+            $meta = $entry->meta;
         }
 
         echo $this->view('admin/cpt_entry_form', [
@@ -1378,7 +1401,7 @@ class AdminController extends Controller
 
         $primaryColor = validate_data($_POST['primary_color'] ?? '');
         $secondaryColor = validate_data($_POST['secondary_color'] ?? '');
-        $customCss = validate_data($_POST['custom_css'] ?? '');
+        $customCss = $_POST['custom_css'] ?? '';
         $stickyHeader = isset($_POST['sticky_header']) ? '1' : '0';
 
         // Custom Styling & Scripts

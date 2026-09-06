@@ -22,7 +22,7 @@
                         <?php foreach ($widget_recent_posts as $post) { ?>
                             <li class="mb-3">
                                 <a href="{{ pathto($post['slug']) }}" class="text-decoration-none font-weight-bold d-block text-dark small">{{ htmlspecialchars($post['title'], ENT_QUOTES, 'UTF-8') }}</a>
-                                <small class="text-muted" style="font-size:11px;">{{ date('M d, Y', strtotime($post['created_at'])) }}</small>
+                                <small class="text-muted" style="font-size:11px;">{{ date('M d, Y', strtotime(!empty($post['publish_date']) ? $post['publish_date'] : $post['created_at'])) }}</small>
                             </li>
                         <?php } ?>
                     <?php } ?>
