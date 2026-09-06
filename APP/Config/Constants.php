@@ -28,6 +28,12 @@ $baseUrl = $protocol . $host . $scriptDir;
 // FIX 2: Standardize the trailing slash
 $baseUrl = rtrim($baseUrl, '/');
 
+// Allow BASE_URL or APP_URL override from .env if defined
+$envBaseUrl = env('APP_URL', env('BASE_URL'));
+if (!empty($envBaseUrl)) {
+    $baseUrl = rtrim((string)$envBaseUrl, '/');
+}
+
 define('BASE_URL', $baseUrl);
 
 // Mailer settings
