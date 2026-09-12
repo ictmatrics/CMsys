@@ -8,6 +8,7 @@ use App\Models\OptionModel;
 use App\Models\PostModel;
 use App\Models\TaxonomyModel;
 use App\Models\MenuModel;
+use App\Models\ExtensionModel;
 
 class HomeController extends Controller
 {
@@ -18,6 +19,11 @@ class HomeController extends Controller
 
     public function __construct()
     {
+        if (!file_exists(APPPATH . '.env') || is_dir(APPPATH . 'Views/install')) {
+            redirect('install');
+            exit();
+        }
+
         $this->optionModel = new OptionModel();
         $this->postModel = new PostModel();
         $this->taxonomyModel = new TaxonomyModel();
@@ -25,6 +31,35 @@ class HomeController extends Controller
         
         $this->checkMaintenance();
         boot_active_modules();
+        (new ExtensionModel())->bootActiveModules();
+    }
+
+    public function view(string $view, array $data = []): string
+    {
+        $vendorsDir = is_dir(APPPATH . 'vendors') ? APPPATH . 'vendors/' : APPPATH . 'Vendors/';
+
+        if (str_starts_with($view, 'Themes/')) {
+            $parts = explode('/', substr($view, 7), 2);
+            $themeName = $parts[0] ?? '';
+            $subView = $parts[1] ?? '';
+            $vendorThemeFile = $vendorsDir . 'themes/' . $themeName . '/' . $subView . '.php';
+
+            if (file_exists($vendorThemeFile)) {
+                return $this->renderDirectViewFile($vendorThemeFile, $data);
+            }
+        }
+
+        return parent::view($view, $data);
+    }
+
+    private function renderDirectViewFile(string $viewFile, array $data = []): string
+    {
+        $content = file_get_contents($viewFile);
+        $content = preg_replace('/\{\{([^}]+)\}\}/', '<?php echo $1; ?>', $content);
+        ob_start();
+        extract($data);
+        eval('?>' . $content);
+        return ob_get_clean() ?: '';
     }
 
     private function getLayoutData(): array

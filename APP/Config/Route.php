@@ -18,6 +18,7 @@ $router->get('', 'HomeController@index');
 $router->get('/', 'HomeController@index');
 $router->get('/install', 'InstallController@index');
 $router->post('/install', 'InstallController@run');
+$router->post('/install/purge', 'InstallController@purge');
 $router->get('/login', 'AuthController@login');
 $router->post('/login', 'AuthController@doLogin');
 $router->get('/logout', 'AuthController@logout');

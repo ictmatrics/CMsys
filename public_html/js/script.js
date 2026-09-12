@@ -447,7 +447,7 @@ $(document).on('click', '[data-theme]', function(e) {
   $('body').removeClass('theme-light theme-dark theme-sepia').addClass(`theme-${theme}`);
   
   // Persist preference across pages
-  localStorage.setItem('codies_theme_mode', theme);
+  localStorage.setItem('cmsys_theme_mode', theme);
   
   if (typeof triggerToast === 'function') {
     triggerToast(`Visual environment set to: ${theme.toUpperCase()}`);
@@ -456,7 +456,7 @@ $(document).on('click', '[data-theme]', function(e) {
 
 // Synchronize button active states on page load
 $(function() {
-  const savedTheme = localStorage.getItem('codies_theme_mode');
+  const savedTheme = localStorage.getItem('cmsys_theme_mode');
   if (savedTheme) {
     $('[data-theme]').removeClass('active');
     $(`[data-theme="${savedTheme}"]`).addClass('active');

@@ -28,6 +28,11 @@ class AdminController extends Controller
 
     public function __construct()
     {
+        if (!file_exists(APPPATH . '.env') || is_dir(APPPATH . 'Views/install')) {
+            redirect('install');
+            exit();
+        }
+
         ICTM_Auth::guard();
 
         // Initialize Models
@@ -40,6 +45,7 @@ class AdminController extends Controller
         $this->menuModel = new MenuModel();
         $this->extensionModel = new ExtensionModel();
         boot_active_modules();
+        $this->extensionModel->bootActiveModules();
     }
 
     private function checkAdminOnly(): void
@@ -49,29 +55,55 @@ class AdminController extends Controller
 
     public function view(string $view, array $data = []): string
     {
+        $vendorsDir = is_dir(APPPATH . 'vendors') ? APPPATH . 'vendors/' : APPPATH . 'Vendors/';
+
         if (strpos($view, 'admin/') === 0) {
             $backendTheme = $this->optionModel->getOption('backend_theme', 'admin');
             if ($backendTheme !== 'admin') {
-                $customView = 'Themes/' . $backendTheme . '/' . substr($view, 6);
-                if (file_exists(APPPATH . 'Views/' . $customView . '.php')) {
-                    $view = $customView;
+                $customVendorThemeView = $vendorsDir . 'themes/' . $backendTheme . '/' . substr($view, 6) . '.php';
+                $customCoreThemeView = APPPATH . 'Views/Themes/' . $backendTheme . '/' . substr($view, 6) . '.php';
+
+                if (file_exists($customVendorThemeView)) {
+                    return $this->renderDirectViewFile($customVendorThemeView, $data);
+                } elseif (file_exists($customCoreThemeView)) {
+                    $view = 'Themes/' . $backendTheme . '/' . substr($view, 6);
                 }
             }
         }
 
-        if (str_starts_with($view, 'Modules/') || str_contains($view, 'Modules/')) {
-            $viewFile = APPPATH . $view . '.php';
-            if (file_exists($viewFile)) {
-                $content = file_get_contents($viewFile);
-                $content = preg_replace('/\{\{([^}]+)\}\}/', '<?php echo $1; ?>', $content);
-                ob_start();
-                extract($data);
-                eval('?>' . $content);
-                return ob_get_clean();
+        if (str_starts_with($view, 'Themes/')) {
+            $parts = explode('/', substr($view, 7), 2);
+            $themeName = $parts[0] ?? '';
+            $subView = $parts[1] ?? '';
+            $vendorThemeFile = $vendorsDir . 'themes/' . $themeName . '/' . $subView . '.php';
+            if (file_exists($vendorThemeFile)) {
+                return $this->renderDirectViewFile($vendorThemeFile, $data);
+            }
+        }
+
+        if (str_starts_with($view, 'Modules/') || str_contains($view, 'Modules/') || str_starts_with($view, 'Vendors/modules/') || str_starts_with($view, 'vendors/modules/')) {
+            $cleanModPath = preg_replace('#^(Vendors/modules/|vendors/modules/|Modules/)#', '', $view);
+            $vendorModFile = $vendorsDir . 'modules/' . $cleanModPath . '.php';
+            $legacyModFile = APPPATH . 'Modules/' . $cleanModPath . '.php';
+
+            if (file_exists($vendorModFile)) {
+                return $this->renderDirectViewFile($vendorModFile, $data);
+            } elseif (file_exists($legacyModFile)) {
+                return $this->renderDirectViewFile($legacyModFile, $data);
             }
         }
 
         return parent::view($view, $data);
+    }
+
+    private function renderDirectViewFile(string $viewFile, array $data = []): string
+    {
+        $content = file_get_contents($viewFile);
+        $content = preg_replace('/\{\{([^}]+)\}\}/', '<?php echo $1; ?>', $content);
+        ob_start();
+        extract($data);
+        eval('?>' . $content);
+        return ob_get_clean() ?: '';
     }
 
     public function index()
@@ -697,39 +729,61 @@ class AdminController extends Controller
         $this->checkAdminOnly();
         $themes = $this->extensionModel->find_all('themes');
 
-        // Scan themes directory to get installed ones that might not be in DB
-        $themesDir = APPPATH . 'Views/Themes/';
+        // Scan core templates in /app/views/themes and vendor extensions in /app/vendors/themes
+        $vendorsDir = is_dir(APPPATH . 'vendors') ? APPPATH . 'vendors/' : APPPATH . 'Vendors/';
+        $themesVendorDir = $vendorsDir . 'themes/';
+        $themesCoreDir = APPPATH . 'Views/Themes/';
         $localThemes = [];
+        $discoveredThemes = [];
 
-        $dirsToScan = [];
-        if (is_dir($themesDir)) {
-            $dirs = array_diff(scandir($themesDir), ['.', '..']);
+        // 1. Scan core system templates in /app/views/themes
+        if (is_dir($themesCoreDir)) {
+            $dirs = array_diff(scandir($themesCoreDir), ['.', '..']);
             foreach ($dirs as $dir) {
-                if (is_dir($themesDir . $dir)) {
-                    $dirsToScan[] = $themesDir . $dir;
+                if (is_dir($themesCoreDir . $dir) && file_exists($themesCoreDir . $dir . '/manifest.json')) {
+                    $discoveredThemes[$dir] = [
+                        'path' => $themesCoreDir . $dir,
+                        'is_system' => true
+                    ];
                 }
             }
         }
 
         $adminThemeDir = APPPATH . 'Views/admin';
-        if (is_dir($adminThemeDir)) {
-            $dirsToScan[] = $adminThemeDir;
+        if (is_dir($adminThemeDir) && file_exists($adminThemeDir . '/manifest.json')) {
+            $discoveredThemes['admin'] = [
+                'path' => $adminThemeDir,
+                'is_system' => true
+            ];
         }
 
-        foreach ($dirsToScan as $dirPath) {
-            if (file_exists($dirPath . '/manifest.json')) {
-                $manifest = json_decode(file_get_contents($dirPath . '/manifest.json'), true);
-                if ($manifest) {
-                    $localThemes[] = [
-                        'name' => $manifest['name'],
-                        'version' => $manifest['version'],
-                        'author' => $manifest['author'] ?? 'Unknown',
-                        'scope' => $manifest['scope'] ?? 'frontend',
-                        'is_active' => (($manifest['scope'] ?? 'frontend') === 'frontend')
-                            ? ($this->optionModel->getOption('frontend_theme') === $manifest['name'] ? 1 : 0)
-                            : ($this->optionModel->getOption('backend_theme') === $manifest['name'] ? 1 : 0)
+        // 2. Scan vendor extension themes in /app/vendors/themes
+        if (is_dir($themesVendorDir)) {
+            $dirs = array_diff(scandir($themesVendorDir), ['.', '..']);
+            foreach ($dirs as $dir) {
+                if (is_dir($themesVendorDir . $dir) && file_exists($themesVendorDir . $dir . '/manifest.json')) {
+                    $discoveredThemes[$dir] = [
+                        'path' => $themesVendorDir . $dir,
+                        'is_system' => false
                     ];
                 }
+            }
+        }
+
+        foreach ($discoveredThemes as $themeKey => $info) {
+            $manifest = json_decode(file_get_contents($info['path'] . '/manifest.json'), true);
+            if ($manifest) {
+                $scope = $manifest['scope'] ?? 'frontend';
+                $localThemes[] = [
+                    'name' => $manifest['name'],
+                    'version' => $manifest['version'],
+                    'author' => $manifest['author'] ?? 'Unknown',
+                    'scope' => $scope,
+                    'is_system' => $info['is_system'],
+                    'is_active' => ($scope === 'frontend')
+                        ? ($this->optionModel->getOption('frontend_theme') === $manifest['name'] ? 1 : 0)
+                        : ($this->optionModel->getOption('backend_theme') === $manifest['name'] ? 1 : 0)
+                ];
             }
         }
 
@@ -781,10 +835,10 @@ class AdminController extends Controller
         $this->checkAdminOnly();
         $name = validate_data($_POST['name'] ?? '');
 
-        if ($name === 'classic' || $name === 'admin') {
-            flash('error_msg', 'The ' . $name . ' theme is a system core and cannot be deleted.', 'alert alert-warning');
+        // Core system templates are strictly restricted to /app/views/themes and protected from deletion
+        if ($name === 'classic' || $name === 'admin' || file_exists(APPPATH . 'Views/Themes/' . $name . '/manifest.json')) {
+            flash('error_msg', 'The ' . $name . ' theme is a core system template and cannot be deleted.', 'alert alert-warning');
             redirect('admin/themes');
-
             exit();
         }
 
@@ -803,27 +857,52 @@ class AdminController extends Controller
     {
         $this->checkAdminOnly();
 
-        $modulesDir = APPPATH . 'Modules/';
+        $vendorsDir = is_dir(APPPATH . 'vendors') ? APPPATH . 'vendors/' : APPPATH . 'Vendors/';
+        $modulesVendorDir = $vendorsDir . 'modules/';
+        $modulesLegacyDir = APPPATH . 'Modules/';
         $localModules = [];
-        if (is_dir($modulesDir)) {
-            $dirs = array_diff(scandir($modulesDir), ['.', '..']);
-            foreach ($dirs as $dir) {
-                if (is_dir($modulesDir . $dir) && file_exists($modulesDir . $dir . '/manifest.json')) {
-                    $manifest = json_decode(file_get_contents($modulesDir . $dir . '/manifest.json'), true);
-                    if ($manifest) {
-                        // Check active status from DB registry
-                        $dbReg = $this->extensionModel->find_single('modules', null, '', [['name', '=', $manifest['name']]]);
-                        $isActive = $dbReg ? (int)$dbReg->is_active : 0;
+        $scannedModules = [];
 
-                        $localModules[] = [
-                            'name' => $manifest['name'],
-                            'version' => $manifest['version'],
-                            'author' => $manifest['author'] ?? 'Unknown',
-                            'description' => $manifest['description'] ?? '',
-                            'is_active' => $isActive
-                        ];
-                    }
+        // 1. Scan /app/vendors/modules for custom modules
+        if (is_dir($modulesVendorDir)) {
+            $dirs = array_diff(scandir($modulesVendorDir), ['.', '..']);
+            foreach ($dirs as $dir) {
+                if (is_dir($modulesVendorDir . $dir) && file_exists($modulesVendorDir . $dir . '/manifest.json')) {
+                    $scannedModules[$dir] = [
+                        'path' => $modulesVendorDir . $dir,
+                        'source' => 'vendor'
+                    ];
                 }
+            }
+        }
+
+        // 2. Scan legacy modules path if present
+        if (is_dir($modulesLegacyDir)) {
+            $dirs = array_diff(scandir($modulesLegacyDir), ['.', '..']);
+            foreach ($dirs as $dir) {
+                if (is_dir($modulesLegacyDir . $dir) && !isset($scannedModules[$dir]) && file_exists($modulesLegacyDir . $dir . '/manifest.json')) {
+                    $scannedModules[$dir] = [
+                        'path' => $modulesLegacyDir . $dir,
+                        'source' => 'legacy'
+                    ];
+                }
+            }
+        }
+
+        foreach ($scannedModules as $modKey => $info) {
+            $manifest = json_decode(file_get_contents($info['path'] . '/manifest.json'), true);
+            if ($manifest) {
+                $dbReg = $this->extensionModel->find_single('modules', null, '', [['name', '=', $manifest['name']]]);
+                $isActive = $dbReg ? (int)$dbReg->is_active : 0;
+
+                $localModules[] = [
+                    'name' => $manifest['name'],
+                    'version' => $manifest['version'],
+                    'author' => $manifest['author'] ?? 'Unknown',
+                    'description' => $manifest['description'] ?? '',
+                    'is_active' => $isActive,
+                    'source' => $info['source']
+                ];
             }
         }
 

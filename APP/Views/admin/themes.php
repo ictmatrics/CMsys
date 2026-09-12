@@ -69,14 +69,21 @@
                     </thead>
                     <tbody>
                         <?php foreach ($themes as $theme) { ?>
-                            <tr class="{{ $backend_theme === 'dark_admin' ? 'bg-dark' : 'bg-light' }}">
+                            <tr>
                                 <td class="ps-4">
                                     <div class="theme-preview-box rounded border bg-light shadow-sm d-flex align-items-center justify-content-center text-muted" style="width: 90px; height: 55px; transition: all 0.3s ease;">
                                         <i class="fa-solid fa-palette fa-2x text-primary opacity-50"></i>
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="fw-bold text-dark fs-6">{{ htmlspecialchars($theme['name'], ENT_QUOTES, 'UTF-8') }}</span>
+                                    <div class="d-flex align-items-center gap-1">
+                                        <span class="fw-bold text-dark fs-6">{{ htmlspecialchars($theme['name'], ENT_QUOTES, 'UTF-8') }}</span>
+                                        <?php if (!empty($theme['is_system'])) { ?>
+                                            <span class="badge bg-light text-secondary border fs-8 ms-1" title="Core system template restricted to /app/views/themes"><i class="fa-solid fa-shield-halved me-1 text-primary"></i>Core System</span>
+                                        <?php } else { ?>
+                                            <span class="badge bg-primary-soft text-primary border border-primary-subtle fs-8 ms-1" title="Extension installed in /app/vendors/themes"><i class="fa-solid fa-puzzle-piece me-1"></i>Vendor</span>
+                                        <?php } ?>
+                                    </div>
                                 </td>
                                 <td>
                                     <span class="text-secondary small fw-medium">{{ htmlspecialchars($theme['author'], ENT_QUOTES, 'UTF-8') }}</span>
@@ -103,7 +110,7 @@
                                                 <span class="hover-text text-white"><i class="fa-solid fa-power-off me-1"></i>Activate</span>
                                             </button>
 
-                                            <?php if ($theme['name'] !== 'classic' && $theme['name'] !== 'admin') { ?>
+                                            <?php if (empty($theme['is_system']) && $theme['name'] !== 'classic' && $theme['name'] !== 'admin') { ?>
                                                 <form action="{{ pathto('admin/theme/delete') }}" method="POST" class="m-0" onsubmit="return confirm('Are you sure you want to delete this theme?');">
                                                     <input type="hidden" name="name" value="{{ $theme['name'] }}">
                                                     <button type="submit" class="btn btn-sm btn-outline-danger rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;" title="Delete Theme"><i class="fa-solid fa-trash-can"></i></button>

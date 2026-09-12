@@ -59,11 +59,24 @@ class ExtensionModel extends Model
         $author = validate_data($manifest['author'] ?? 'Unknown');
         $sqlScript = $manifest['sql_script'] ?? ''; // schema.sql name
 
-        // Destination directories
+        // Enforce strict name format to prevent directory traversal
+        if (!preg_match('/^[a-zA-Z0-9_-]+$/', $name)) {
+            $zip->close();
+            return ['status' => 'error', 'message' => 'Extension name contains invalid characters. Use alphanumeric, hyphens, and underscores only.'];
+        }
+
+        // Core system templates in APP/Views/Themes are strictly protected
+        if ($type === 'theme' && in_array(strtolower($name), ['classic', 'admin'], true)) {
+            $zip->close();
+            return ['status' => 'error', 'message' => 'The ' . $name . ' theme is a core system template and cannot be overwritten.'];
+        }
+
+        // Target directories: /app/vendors/themes/{theme_name} and /app/vendors/modules/{module_name}
+        $vendorsDir = is_dir(APPPATH . 'vendors') ? APPPATH . 'vendors/' : APPPATH . 'Vendors/';
         if ($type === 'theme') {
-            $destDir = APPPATH . 'Views/Themes/' . $name . '/';
+            $destDir = $vendorsDir . 'themes/' . $name . '/';
         } else {
-            $destDir = APPPATH . 'Modules/' . $name . '/';
+            $destDir = $vendorsDir . 'modules/' . $name . '/';
         }
 
         // Ensure parent directory exists
@@ -83,7 +96,7 @@ class ExtensionModel extends Model
             $prefix = $parts[0] . '/';
         }
 
-        // Extract files
+        // Extract files with strict directory traversal prevention
         for ($i = 0; $i < $zip->numFiles; $i++) {
             $filename = $zip->getNameIndex($i);
             // Skip directory entries themselves
@@ -97,7 +110,13 @@ class ExtensionModel extends Model
                 $relativePath = substr($filename, strlen($prefix));
             }
 
-            $targetFile = $destDir . $relativePath;
+            $normalizedRelative = str_replace('\\', '/', $relativePath);
+            if (str_contains($normalizedRelative, '../') || str_starts_with($normalizedRelative, '/')) {
+                $zip->close();
+                return ['status' => 'error', 'message' => 'Archive contains invalid or unsafe file paths.'];
+            }
+
+            $targetFile = $destDir . $normalizedRelative;
             if (!is_dir(dirname($targetFile))) {
                 @mkdir(dirname($targetFile), 0755, true);
             }
@@ -141,7 +160,7 @@ class ExtensionModel extends Model
             }
         }
 
-        return ['status' => 'success', 'message' => ucwords($type) . ' installed successfully!'];
+        return ['status' => 'success', 'message' => ucwords($type) . ' installed successfully into target vendor directory!'];
     }
 
     public function activateTheme(string $name, string $scope): bool
@@ -174,11 +193,29 @@ class ExtensionModel extends Model
 
     public function deleteExtension(string $name, string $type): bool
     {
+        $name = trim($name);
+        if (!preg_match('/^[a-zA-Z0-9_-]+$/', $name)) {
+            return false;
+        }
+
+        // Core system templates in APP/Views/Themes are immutable and strictly protected
+        if ($type === 'theme' && in_array(strtolower($name), ['classic', 'admin'], true)) {
+            return false;
+        }
+
+        $vendorsDir = is_dir(APPPATH . 'vendors') ? APPPATH . 'vendors/' : APPPATH . 'Vendors/';
         if ($type === 'theme') {
-            $destDir = APPPATH . 'Views/Themes/' . $name . '/';
+            $destDir = $vendorsDir . 'themes/' . $name . '/';
+            // Allow cleaning up non-core legacy themes if existing in Views/Themes
+            if (!is_dir($destDir) && is_dir(APPPATH . 'Views/Themes/' . $name . '/')) {
+                $destDir = APPPATH . 'Views/Themes/' . $name . '/';
+            }
             $registryTable = $this->themesTable;
         } else {
-            $destDir = APPPATH . 'Modules/' . $name . '/';
+            $destDir = $vendorsDir . 'modules/' . $name . '/';
+            if (!is_dir($destDir) && is_dir(APPPATH . 'Modules/' . $name . '/')) {
+                $destDir = APPPATH . 'Modules/' . $name . '/';
+            }
             $registryTable = $this->modulesTable;
         }
 
@@ -198,6 +235,35 @@ class ExtensionModel extends Model
         }
 
         return true;
+    }
+
+    public function bootActiveModules(): void
+    {
+        static $booted = false;
+        if ($booted) {
+            return;
+        }
+        $booted = true;
+
+        try {
+            $activeModules = $this->find_all($this->modulesTable, '', [['is_active', '=', 1]]);
+            if ($activeModules) {
+                $vendorsDir = is_dir(APPPATH . 'vendors') ? APPPATH . 'vendors/' : APPPATH . 'Vendors/';
+                foreach ($activeModules as $module) {
+                    $moduleName = is_array($module) ? ($module['name'] ?? '') : ($module->name ?? '');
+                    if (!empty($moduleName)) {
+                        $initFile = $vendorsDir . 'modules/' . $moduleName . '/init.php';
+                        if (file_exists($initFile)) {
+                            require_once $initFile;
+                        } elseif (file_exists(APPPATH . 'Modules/' . $moduleName . '/init.php')) {
+                            require_once APPPATH . 'Modules/' . $moduleName . '/init.php';
+                        }
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // Ignore during installation or if table missing
+        }
     }
 
     private function runSqlFile(string $filePath): void

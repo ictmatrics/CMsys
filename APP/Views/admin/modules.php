@@ -46,26 +46,33 @@
                                 <?php foreach ($modules as $mod) { ?>
                                     <tr>
                                         <td class="ps-4">
-                                            <strong class="d-block">{{ htmlspecialchars($mod['name'], ENT_QUOTES, 'UTF-8') }}</strong>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <strong class="d-block text-dark">{{ htmlspecialchars($mod['name'], ENT_QUOTES, 'UTF-8') }}</strong>
+                                                <span class="badge bg-light text-secondary border fs-8" title="Located in /app/vendors/modules/{{ htmlspecialchars($mod['name'], ENT_QUOTES, 'UTF-8') }}"><i class="fa-solid fa-cube me-1 text-primary"></i>Vendor Module</span>
+                                            </div>
                                             <small class="text-muted">Version {{ $mod['version'] }} by {{ htmlspecialchars($mod['author'], ENT_QUOTES, 'UTF-8') }}</small>
                                         </td>
                                         <td>
                                             <p class="mb-0 small text-muted" style="max-width: 300px;">{{ htmlspecialchars($mod['description'], ENT_QUOTES, 'UTF-8') }}</p>
                                         </td>
                                         <td>
-                                            <span class="badge bg-<?= $mod['is_active'] === 1 ? 'success' : 'secondary' ?>">
-                                                <?= $mod['is_active'] === 1 ? 'Active' : 'Inactive' ?>
-                                            </span>
+                                            <?php if ($mod['is_active'] === 1) { ?>
+                                                <span class="badge bg-success">Active</span>
+                                            <?php } else { ?>
+                                                <span class="badge bg-secondary">Inactive</span>
+                                            <?php } ?>
                                         </td>
                                         <td class="text-end pe-4">
                                             <div class="d-flex justify-content-end align-items-center">
                                                 <?php do_action('admin_module_actions', $mod); ?>
-                                                <a href="{{ pathto('admin/module/toggle/' . $mod['name']) }}" class="btn btn-sm btn-<?= $mod['is_active'] === 1 ? 'outline-secondary' : 'success' ?> me-2">
-                                                    <?= $mod['is_active'] === 1 ? 'Deactivate' : 'Activate' ?>
-                                                </a>
+                                                <?php if ($mod['is_active'] === 1) { ?>
+                                                    <a href="{{ pathto('admin/module/toggle/' . $mod['name']) }}" class="btn btn-sm btn-outline-secondary me-2">Deactivate</a>
+                                                <?php } else { ?>
+                                                    <a href="{{ pathto('admin/module/toggle/' . $mod['name']) }}" class="btn btn-sm btn-success me-2">Activate</a>
+                                                <?php } ?>
                                                 <form action="{{ pathto('admin/module/delete') }}" method="POST" class="m-0" onsubmit="return confirm('Are you sure you want to uninstall and delete this module? This will clean up its database files.');">
                                                     <input type="hidden" name="name" value="{{ $mod['name'] }}">
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash-can"></i></button>
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Uninstall Module"><i class="fa-solid fa-trash-can"></i></button>
                                                 </form>
                                             </div>
                                         </td>

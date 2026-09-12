@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CMsys - README</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet" />
+    <style>
+      :root {
+        --bg-color: #0d1117;
+        --text-color: #e6edf3;
+        --text-muted: #8b949e;
+        --border-color: #30363d;
+        --code-bg: #161b22;
+        --link-color: #58a6ff;
+        --accent-color: #6366f1;
+        --hr-color: #21262d;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          "Plus Jakarta Sans",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Helvetica,
+          Arial,
+          sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        line-height: 1.7;
+        padding: 40px 20px;
+      }
+
+      .markdown-body {
+        max-width: 920px;
+        margin: 0 auto;
+        background: #161b22;
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 45px 50px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      }
+
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        color: #ffffff;
+        font-weight: 700;
+        line-height: 1.3;
+      }
+
+      h1 {
+        font-size: 2.25rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 16px;
+        margin-bottom: 20px;
+        letter-spacing: -0.5px;
+      }
+
+      h2 {
+        font-size: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 10px;
+        margin-top: 32px;
+        margin-bottom: 16px;
+        letter-spacing: -0.3px;
+      }
+
+      h3 {
+        font-size: 1.2rem;
+        margin-top: 24px;
+        margin-bottom: 12px;
+      }
+
+      p {
+        margin-bottom: 16px;
+        font-size: 15px;
+        color: #c9d1d9;
+      }
+
+      hr {
+        height: 1px;
+        background-color: var(--hr-color);
+        border: none;
+        margin: 32px 0;
+      }
+
+      ul,
+      ol {
+        margin-bottom: 16px;
+        padding-left: 28px;
+        font-size: 15px;
+        color: #c9d1d9;
+      }
+
+      li {
+        margin-bottom: 8px;
+      }
+
+      li > ul {
+        margin-top: 8px;
+        margin-bottom: 8px;
+      }
+
+      strong {
+        color: #ffffff;
+        font-weight: 600;
+      }
+
+      a {
+        color: var(--link-color);
+        text-decoration: none;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+
+      code {
+        font-family:
+          "JetBrains Mono", SFMono-Regular, Consolas, "Liberation Mono", Menlo,
+          monospace;
+        font-size: 13.5px;
+        background-color: rgba(110, 118, 129, 0.2);
+        padding: 3px 6px;
+        border-radius: 6px;
+        color: #f0f6fc;
+      }
+
+      pre {
+        background-color: var(--bg-color);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 16px 20px;
+        overflow-x: auto;
+        margin: 16px 0;
+      }
+
+      pre code {
+        background-color: transparent;
+        padding: 0;
+        border-radius: 0;
+        font-size: 13.5px;
+        line-height: 1.6;
+        color: #e6edf3;
+        display: block;
+      }
+
+      @media (max-width: 768px) {
+        body {
+          padding: 15px;
+        }
+        .markdown-body {
+          padding: 25px 20px;
+        }
+        h1 {
+          font-size: 1.8rem;
+        }
+        h2 {
+          font-size: 1.35rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <article class="markdown-body">
+      <h1>CMsys</h1>
+
+      <p>
+        CMsys is a lightweight, fast, and modular Content Management System
+        built on top of the <strong>ICTM Framework 4.5</strong> (4.5.1).
+        Designed with a decoupled MVC architecture, CMsys delivers high
+        performance, robust multi-variant theming with strict directory
+        isolation, custom modular extensions, environmental configuration
+        (<code>.env</code>), dual database engine support (MySQL and SQLite),
+        built-in CSRF protection, and a secure post-deployment setup isolation
+        process.
+      </p>
+
+      <hr />
+
+      <h2>Key Features</h2>
+
+      <ul>
+        <li>
+          <strong>MVC Architecture:</strong> Powered by the lightweight,
+          high-performance ICTM Framework.
+        </li>
+        <li>
+          <strong>Modern PHP Ready (8.2+ / 8.3+):</strong> Strict typing
+          (<code>declare(strict_types=1);</code>), typed properties, match
+          expressions, and PSR-12 standard compliance.
+        </li>
+        <li>
+          <strong>Dual Database Engine Support:</strong> Native support for both
+          <strong>MySQL</strong> and <strong>SQLite</strong> engines using
+          secure, parameterized query builders.
+        </li>
+        <li>
+          <strong>Decoupled Extension Management:</strong>
+          <ul>
+            <li>
+              <strong>Custom Vendor Themes:</strong> Standardized path under
+              <code>/app/vendors/themes/{theme_name}</code>
+              (<code>APP/Vendors/themes/</code>).
+            </li>
+            <li>
+              <strong>Custom Vendor Modules:</strong> Standardized path under
+              <code>/app/vendors/modules/{module_name}</code>
+              (<code>APP/Vendors/modules/</code>).
+            </li>
+            <li>
+              <strong>Core System Templates:</strong> Strictly restricted to
+              <code>/app/views/themes</code> (<code>APP/Views/Themes/</code>) to
+              safeguard system integrity against overwrite or deletion.
+            </li>
+          </ul>
+        </li>
+        <li>
+          <strong>Secure Web Installer &amp; Deployment Isolation:</strong>
+          <ul>
+            <li>
+              Setup assets relocated to <code>/app/views/install</code> (<code
+                >install.php</code
+              >
+              and clean DDL <code>schema.sql</code>).
+            </li>
+            <li>
+              Strict system lockdown: Frontend and Admin views remain locked
+              until setup resources are purged.
+            </li>
+            <li>
+              Interactive post-deployment action control
+              (<code>/install/purge</code>) permanently deletes setup assets and
+              unlocks the application.
+            </li>
+          </ul>
+        </li>
+        <li>
+          <strong>Adaptive Theming Engine:</strong> Hierarchical template
+          resolution prioritizing vendor themes with seamless core system
+          fallback.
+        </li>
+        <li>
+          <strong>Environment Configuration:</strong> Secret and environment
+          variable management using <code>APP/.env</code> and the
+          <code>env()</code> helper.
+        </li>
+        <li>
+          <strong>CSRF Protection Suite:</strong> Built-in token generation,
+          verification, and hidden form input/meta helpers.
+        </li>
+        <li>
+          <strong>Admin Dashboard:</strong> Comprehensive administration suite
+          for posts, pages, custom post types, menus, media, widgets, themes,
+          modules, and system settings.
+        </li>
+        <li>
+          <strong>Defense-in-Depth Security:</strong> Automated XSS sanitization
+          (<code>validate_data()</code>), SQL injection prevention, ZIP slip /
+          path traversal defenses, reverse-proxy IP detection, and role-based
+          authentication (<code>ICTM_Auth</code>).
+        </li>
+      </ul>
+
+      <hr />
+
+      <h2>System Requirements</h2>
+
+      <ul>
+        <li>
+          <strong>PHP:</strong> &gt;= 8.2 (PHP 8.3+ recommended) with
+          <code>PDO</code>, <code>pdo_mysql</code>, and
+          <code>pdo_sqlite</code> extensions.
+        </li>
+        <li><strong>Composer</strong> (optional for third-party libraries).</li>
+        <li>
+          <strong>Web Server:</strong> Apache or Nginx with URL Rewriting
+          enabled.
+        </li>
+        <li>
+          <strong>Database:</strong> MySQL 5.7+ / MariaDB 10.3+ or SQLite 3.
+        </li>
+      </ul>
+
+      <hr />
+
+      <h2>How to Install &amp; Deploy</h2>
+
+      <ol>
+        <li>
+          <p><strong>Clone or Extract the Repository:</strong></p>
+          <pre><code class="language-bash">git clone https://github.com/ictmatrics/CMsys.git
+cd CMsys</code></pre>
+        </li>
+        <li>
+          <p><strong>Configure Environment Variables:</strong></p>
+          <ul>
+            <li>
+              Copy <code>APP/env.example</code> to <code>APP/.env</code>:
+              <pre><code class="language-bash">cp APP/env.example APP/.env</code></pre>
+            </li>
+            <li>
+              Update your database credentials (<code>DB_CONNECTION=mysql</code>
+              or <code>DB_CONNECTION=sqlite</code>), site title, and mail
+              settings in <code>APP/.env</code>.
+            </li>
+          </ul>
+        </li>
+        <li>
+          <p><strong>Configure the Web Server:</strong></p>
+          <ul>
+            <li>
+              Point your web server's document root to the
+              <code>public_html</code> directory.
+            </li>
+            <li>
+              For Apache, an <code>.htaccess</code> file is provided in
+              <code>public_html/</code>. Ensure <code>mod_rewrite</code> is
+              enabled.
+            </li>
+          </ul>
+        </li>
+        <li>
+          <p><strong>Execute Setup &amp; Deploy:</strong></p>
+          <ul>
+            <li>
+              Navigate to <code>http://yourdomain.com/install</code> in your
+              browser.
+            </li>
+            <li>
+              Input the initial administrator credentials. The installer runs
+              the clean DDL schema from
+              <code>APP/Views/install/schema.sql</code> and provisions core
+              settings.
+            </li>
+            <li>
+              <strong>Purge Setup Resources:</strong> Upon successful
+              deployment, click
+              <strong>Purge Setup Resources &amp; Unlock System</strong>
+              (<code>/install/purge</code>). This permanently purges setup
+              scripts from disk and unlocks frontend and admin access.
+            </li>
+          </ul>
+        </li>
+      </ol>
+
+      <hr />
+
+      <h2>Architectural Directory Structure</h2>
+
+      <pre><code class="language-text">├── APP/
+│   ├── Config/          # Routing (Route.php), autoloading, constants, database config
+│   ├── Controllers/     # MVC Request controllers (App\Controllers)
+│   ├── Filters/         # Middleware &amp; authentication guards
+│   ├── Helpers/         # Procedural helpers (env, csrf, url, format, flash, db, hook)
+│   ├── Libraries/       # Core application libraries &amp; managers
+│   ├── Models/          # Database models (App\Models)
+│   ├── System/          # ICTM Framework core engine (Read-only)
+│   ├── Vendors/         # Extension management root
+│   │   ├── themes/      # Custom vendor themes (/app/vendors/themes/{theme_name})
+│   │   └── modules/     # Custom vendor modules (/app/vendors/modules/{module_name})
+│   ├── Views/           # Application views &amp; core templates
+│   │   ├── Themes/      # Immutable core system templates (classic, admin)
+│   │   ├── admin/       # Administration panel layouts &amp; views
+│   │   └── install/     # Setup assets &amp; schema (purged post-deployment)
+│   ├── .env             # Active environment configuration
+│   └── env.example      # Environment configuration template
+├── public_html/         # Public web root
+│   ├── css/             # Stylesheets &amp; Bootstrap framework
+│   ├── js/              # Core JavaScript &amp; jQuery libraries
+│   ├── index.php        # Front controller &amp; request entry point
+│   └── .htaccess        # Rewrite rules &amp; security headers
+├── composer.json        # Dependencies &amp; PSR-4 namespace mapping
+├── README.md            # Markdown documentation
+└── README.html          # HTML documentation rendering</code></pre>
+
+      <hr />
+
+      <h2>Extension Standards &amp; Guidelines</h2>
+
+      <h3>Themes (<code>/app/vendors/themes/{theme_name}</code>)</h3>
+      <ul>
+        <li>
+          Installed custom themes reside in
+          <code>APP/Vendors/themes/{theme_name}/</code>.
+        </li>
+        <li>
+          Must contain a valid <code>manifest.json</code> specifying
+          <code>name</code>, <code>version</code>, <code>author</code>, and
+          <code>scope</code> (<code>frontend</code> or <code>backend</code>).
+        </li>
+        <li>
+          Theme templates are automatically resolved by controllers via
+          <code>$this-&gt;view('Themes/{theme_name}/{view}')</code>.
+        </li>
+        <li>
+          Core system templates under <code>APP/Views/Themes/</code> remain
+          immutable and cannot be overwritten or deleted.
+        </li>
+      </ul>
+
+      <h3>Modules (<code>/app/vendors/modules/{module_name}</code>)</h3>
+      <ul>
+        <li>
+          Custom add-on modules reside in
+          <code>APP/Vendors/modules/{module_name}/</code>.
+        </li>
+        <li>
+          Must contain a <code>manifest.json</code> describing the module.
+        </li>
+        <li>
+          Bootstrapped via <code>init.php</code> during the application
+          lifecycle via <code>ExtensionModel::bootActiveModules()</code>.
+        </li>
+      </ul>
+
+      <hr />
+
+      <h2>Contributing</h2>
+
+      <p>
+        Contributions are welcome! Please follow PSR-12 coding standards,
+        enforce strict typing (<code>declare(strict_types=1);</code>), and
+        adhere to the framework's native helpers and syntax rules.
+      </p>
+
+      <hr />
+
+      <h2>License</h2>
+
+      <p>
+        This project is open-source software licensed under the
+        <a href="https://opensource.org/licenses/MIT">MIT license</a>.
+      </p>
+    </article>
+  </body>
+</html>

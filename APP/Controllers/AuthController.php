@@ -12,6 +12,11 @@ class AuthController extends Controller
 
     public function __construct()
     {
+        if (!file_exists(APPPATH . '.env') || is_dir(APPPATH . 'Views/install')) {
+            redirect('install');
+            exit();
+        }
+
         $this->userModel = new UserModel();
     }
 
