@@ -1,1 +1,0 @@
-/* Classic theme custom scripting */
